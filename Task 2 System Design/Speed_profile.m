@@ -5,5 +5,6 @@ function [U_array]=Speed_profile(U_0, z_0, alpha, h_0, h_hub)
         U_array=U_0*(log(h/z_0)/log(h_0/z_0));
     else
         U_meso=U_0*(log(60/z_0)/log(h_0/z_0));
-        U_array=U_meso*(h_hub/60)^alpha
+        U_array=U_meso*(h_hub/60)^alpha;
     end
+end

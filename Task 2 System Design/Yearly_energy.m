@@ -1,8 +1,6 @@
-function [Ey_kWh] = Yearly_energy(P_curve,U_r,f_curve)
-%Anual Energy Yield
-deltat = 365*24*3600;
+function [Ey_kWh] = Yearly_energy(P_curve,U_ci,U_co,f_curve)
+%Anual Energy Yield, using as input the power curve, cut-in and cut-out speed in m/s and the Weibull wind distrubtion
 
-Ey = deltat*f_curve*P_curve'; %J
-Ey_kWh = (Ey/1000)/3600; %kWh 
+Ey_kWh = 24*365*integral(P_curve*f_curve, U_ci, U_co);
 
 end
