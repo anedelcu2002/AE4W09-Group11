@@ -1,14 +1,23 @@
 function [f_curve] = Weibull_regressor(U_array) 
     % first, transforms the wind speed time-series U_array in m/s into a histogram, then fits a Weibull distribution onto that histogram
 
-    U_sorted=histogram(U_array, max(U_array)); %number of bins is equal to the maximum wind speed, so that the bins are split by 1 m/s
-
-    [k, a]=wblfit(U_sorted); %shape and scale parameter
+    U_array=transpose(U_array);
+    pd=fitdist(U_array,'wbl');
+    parameters=paramci(pd);
+    a=(parameters(1,1)+parameters(2,1))/2;
+    k=(parameters(1,2)+parameters(2,2))/2;
+    
+    figure;
+    title('Weibull distribution');
+    xlabel('Wind speed (m/s)');
+    ylabel('Probability');
+    axis tight
+    histfit(U_array, ceil(max(U_array)), 'wbl');
 
     f_curve = [];
 
-    for i = linspace(1,length(U_range),max(U_array)-min(U_array))
-        f_curve(i) = (k/a)*((U_range(i)/a)^(k-1))*exp(-(U_range(i)/a)^k);
+    for i = 1:ceil(max(U_array))-ceil(min(U_array))
+        f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k);
     end
 
 end
