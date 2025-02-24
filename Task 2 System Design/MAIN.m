@@ -1,6 +1,7 @@
 % problems to check: 
 % currently all terms are defined and calculated as arrays of integers, starting from 1
 
+clear all;
 
 %% INPUT DATA
 U_0=[1,1,2,2,3,3,3,4,4,4,4,5,5,5,6,6,7,7,8,9,10,11,12]; % measured wind speed at altitude h_0 in m/s
@@ -25,7 +26,7 @@ LPC_array=[];
 
 for D=D_original:1.2*D_original*P_rated/P_original
     %% HUB HEIGHT WIND PROFILE CALCULATOR
-    h_hub=h_0*P_rated/P_original; % scale hub height linearly with rated power based on original turbine, could use different rule
+    h_hub=h_0*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
     U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
 
     %% WEIBULL REGRESSOR
@@ -46,7 +47,7 @@ for D=D_original:1.2*D_original*P_rated/P_original
 end
 
 %% DIAMETER SELECTION
-[LPC_min, D]=min(LPC_array)
+[LPC_min, D]=min(LPC_array);
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
 min_tip_speed = omega_min(U_ci, lambda_design, D);
