@@ -3,7 +3,7 @@ function [E_y] = Yearly_energy(P_curve,U_ci,U_co,f_curve)
 
     E_y=0;
     for i=U_ci:U_co
-        E_y=3600*24*365*P_curve(i).*f_curve(i);
+        E_y=E_y+3600*24*365*P_curve(i).*f_curve(i);
     end
 
 end

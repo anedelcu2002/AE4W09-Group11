@@ -6,17 +6,11 @@ function [f_curve] = Weibull_regressor(U_array)
     parameters=paramci(pd);
     a=(parameters(1,1)+parameters(2,1))/2;
     k=(parameters(1,2)+parameters(2,2))/2;
-    
-    figure;
-    title('Weibull distribution');
-    xlabel('Wind speed (m/s)');
-    ylabel('Probability');
-    axis tight
-    histfit(U_array, ceil(max(U_array)), 'wbl');
+
 
     f_curve = [];
 
-    for i = 1:ceil(max(U_array))-ceil(min(U_array))
+    for i = 1:ceil(max(U_array))
         f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k);
     end
 

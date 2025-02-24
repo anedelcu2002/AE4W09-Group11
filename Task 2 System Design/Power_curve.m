@@ -4,11 +4,11 @@ function [P_curve,U_r] = Power_curve(P_r,rho,U_ci,U_co,C_p,D,eff,U_array)
 
     R = 0.5*D;
 
-    U_r = (P_r/(0.5*eff*rho*C_p*pi*R^2))^(1/3)
+    U_r = (P_r/(0.5*eff*rho*C_p*pi*R^2))^(1/3);
 
     P_curve = [];
 
-    for i = 1:(ceil(max(U_array))-ceil(min(U_array)))
+    for i = 1:ceil(max(U_array))
         if  i < U_ci
             P_curve(i) = 0;
         elseif i < U_r
@@ -19,12 +19,5 @@ function [P_curve,U_r] = Power_curve(P_r,rho,U_ci,U_co,C_p,D,eff,U_array)
             P_curve(i) = 0;
         end
     end
-
-    figure;
-    plot(1:(max(U_array)-min(U_array)), P_curve);
-    title('Power curve');
-    xlabel('Power [W]');
-    ylabel('Wind speed [m/s]');
-    axis tight
 
 end
