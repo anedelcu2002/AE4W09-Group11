@@ -8,7 +8,7 @@ function [P_curve,U_r] = Power_curve(P_r,rho,U_ci,U_co,C_p,D,eff,U_array)
 
     P_curve = [];
 
-    for i = 1:ceil(max(U_array))
+    for i = 1:U_co
         if  i < U_ci
             P_curve(i) = 0;
         elseif i < U_r
