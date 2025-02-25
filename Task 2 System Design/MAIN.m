@@ -23,8 +23,9 @@ max_tip_speed_limit=100; % upper limit for maximum tip speed in rad/s
 %% DIAMETER ARRAY CALCULATOR
 D_array=[];
 LPC_array=[];
+CF_array=[];
 
-for D=D_original:1.2*D_original*P_rated/P_original
+for D=D_original:2.2*D_original*P_rated/P_original
     %% HUB HEIGHT WIND PROFILE CALCULATOR
     h_hub=h_0*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
     U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
@@ -41,9 +42,13 @@ for D=D_original:1.2*D_original*P_rated/P_original
     %% LPC CALCULATOR
     LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
 
+    %% CAPACITY FACTOR CALCULATOR
+    CF=E_y/P_rated/(3600*24*365);
+
     %% VALUE STORAGE
     D_array=[D_array D];
     LPC_array=[LPC_array LPC];
+    CF_array=[CF_array CF];
 end
 
 %% DIAMETER SELECTION
@@ -77,4 +82,11 @@ plot(D_array, LPC_array);
 title('LPC-diameter plot');
 xlabel('Diameter [m]');
 ylabel('LPC [1/J]');
+axis tight
+
+figure;
+plot(D_array, CF_array);
+title('CF-diameter plot');
+xlabel('Diameter [m]');
+ylabel('Capacity factor');
 axis tight
