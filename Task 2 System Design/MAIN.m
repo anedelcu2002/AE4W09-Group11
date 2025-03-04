@@ -30,7 +30,7 @@ D_array=[];
 LPC_array=[];
 CF_array=[];
 
-for D=(0.5*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
+for D=(0.8*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
     if a==0 && k==0
         %% HUB HEIGHT WIND PROFILE CALCULATOR
         h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
@@ -39,12 +39,13 @@ for D=(0.5*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
         %% WEIBULL REGRESSOR
         f_curve=Weibull_regressor(U_array);
     else 
+        %% DIRECT REGRESSOR AND SCALER
+        h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
+        wind_speed_factor=Speed_profile(1, z_0, alpha, h_0, h_hub) % shift speed to hub height
         f_curve = [];
-
-        for i = 1:U_co
-            f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k); % if shape and scale parameters are known, define Weibull curve by them
+        for i = 1:U_co*2
+            f_curve(i) = (k/a)*((i/wind_speed_factor/a)^(k-1))*exp(-(i/wind_speed_factor/a)^k); % if shape and scale parameters are known, define Weibull curve by them
         end
-
     end
 
     %% POWER CURVE CALCULATOR
@@ -75,9 +76,11 @@ if a==0 && k==0
     U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
     f_curve=Weibull_regressor(U_array);
 else 
+    h_hub=h_original*D/D_original;
+    wind_speed_factor=Speed_profile(1, z_0, alpha, h_0, h_hub);
     f_curve = [];
-    for i = 1:U_co
-        f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k);
+    for i = 1:U_co*2
+        f_curve(i) = (k/a)*((i*(wind_speed_factor-1)/a)^(k-1))*exp(-(i*(wind_speed_factor-1)/a)^k);
     end
 
 end
