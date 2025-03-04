@@ -12,7 +12,8 @@ rho=1.225; % air density at hub level in kg/m3
 P_original=5*10^6; % original turbine rated power in W
 D_original=126.5; % original turbine diameter in W
 h_original=90; % original turbine hub height in m
-E_y_original=1000000000; % original turbine yearly energy generation in J (may not be needed)
+C_original=10^6; % original turbine installation costs in EUR
+L_original=20; % original turbine lifetime in years
 U_ci=3; % assumed cut-in speed in m/s
 U_co=25; % assumed cut-out speed in m/s
 c_p=0.482; % assumed power coefficient
@@ -70,17 +71,13 @@ D=D_array(i);
 
 %% RECALCULATE VARIABLES WITH SELECTED DIAMETER
 if a==0 && k==0
-    %% HUB HEIGHT WIND PROFILE CALCULATOR
-    h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
+    h_hub=h_original*D/D_original; 
     U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
-
-    %% WEIBULL REGRESSOR
     f_curve=Weibull_regressor(U_array);
 else 
     f_curve = [];
-
     for i = 1:U_co
-        f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k); % if shape and scale parameters are known, define Weibull curve by them
+        f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k);
     end
 
 end
@@ -92,6 +89,11 @@ E_y=Yearly_energy(P_curve,U_ci,U_co,f_curve);
 LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
 
 CF=E_y/P_rated/(3600*24*365);
+
+%% ENERGY COST CALCULATOR
+C=C_original*LPC*E_y; % installation cost for designed turbine, assuming linear scaling (?)
+E_cost=C/E_y/L_original; % energy cost for designed turbine, assuming lifetime of x years (?)
+
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
 min_rot_speed = omega_min(U_ci, lambda_design, D); % calculate minimum rotation speed
