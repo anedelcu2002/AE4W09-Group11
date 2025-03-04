@@ -5,37 +5,49 @@ clear all;
 
 %% INPUT DATA
 U_0=[1,1,2,2,3,3,3,4,4,4,4,5,5,5,6,6,7,7,8,9,10,11,12]; % measured wind speed at altitude h_0 in m/s
-z_0=0.001; % surface roughness during measurement in m
-h_0=10; % altitude of wind speed measurement in m
-P_rated=300000; % selected rated power in W
+z_0=0.1; % surface roughness during measurement in m
+h_0=50; % altitude of wind speed measurement in m
+P_rated=3.5*10^6; % selected rated power in W
 rho=1.225; % air density at hub level in kg/m3
-P_original=100000; % original turbine rated power in W
-D_original=70; % original turbine diameter in W
-h_original=50; % original turbine hub height in m
+P_original=5*10^6; % original turbine rated power in W
+D_original=126.5; % original turbine diameter in W
+h_original=90; % original turbine hub height in m
 E_y_original=1000000000; % original turbine yearly energy generation in J (may not be needed)
-U_ci=2; % assumed cut-in speed in m/s
-U_co=10; % assumed cut-out speed in m/s
-c_p=0.5; % assumed power coefficient
+U_ci=3; % assumed cut-in speed in m/s
+U_co=25; % assumed cut-out speed in m/s
+c_p=0.482; % assumed power coefficient
 alpha=0.4; % constant for power law wind speed profile
-eff=0.9; % assumed turbine efficiency
-lambda_design=8; % assumed design tip speed ratio
+eff=0.944; % assumed turbine efficiency
+lambda_design=7.55; % assumed design tip speed ratio
 rot_speed_limit=100; % upper limit for maximum tip speed in rad/s
+
+a=6.1; % weibull scale parameter to skip weibull regressor, leave zero if not known
+k=1.63; % weibull shape parameter to skip weibull regressor, leave zero if not known
 
 %% DIAMETER ARRAY CALCULATOR
 D_array=[];
 LPC_array=[];
 CF_array=[];
 
-for D=D_original:2.2*D_original*P_rated/P_original
-    %% HUB HEIGHT WIND PROFILE CALCULATOR
-    h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
-    U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
+for D=(0.5*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
+    if a==0 && k==0
+        %% HUB HEIGHT WIND PROFILE CALCULATOR
+        h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
+        U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
 
-    %% WEIBULL REGRESSOR
-    f_curve=Weibull_regressor(U_array);
+        %% WEIBULL REGRESSOR
+        f_curve=Weibull_regressor(U_array);
+    else 
+        f_curve = [];
+
+        for i = 1:U_co
+            f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k); % if shape and scale parameters are known, define Weibull curve by them
+        end
+
+    end
 
     %% POWER CURVE CALCULATOR
-    [P_curve,U_rated] = Power_curve(P_rated,rho,U_ci,U_co,c_p,D,eff,U_array);
+    [P_curve,U_rated] = Power_curve(P_rated,rho,U_ci,U_co,c_p,D,eff);
 
     %% YEARLY ENERGY GENERATION CALCULATOR
     E_y=Yearly_energy(P_curve,U_ci,U_co,f_curve);
@@ -57,12 +69,23 @@ end
 D=D_array(i);
 
 %% RECALCULATE VARIABLES WITH SELECTED DIAMETER
-h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
-U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
+if a==0 && k==0
+    %% HUB HEIGHT WIND PROFILE CALCULATOR
+    h_hub=h_original*D/D_original; % scale hub height linearly with rated power based on original turbine, could use different rule
+    U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
 
-f_curve=Weibull_regressor(U_array);
+    %% WEIBULL REGRESSOR
+    f_curve=Weibull_regressor(U_array);
+else 
+    f_curve = [];
 
-[P_curve,U_rated] = Power_curve(P_rated,rho,U_ci,U_co,c_p,D,eff,U_array);
+    for i = 1:U_co
+        f_curve(i) = (k/a)*((i/a)^(k-1))*exp(-(i/a)^k); % if shape and scale parameters are known, define Weibull curve by them
+    end
+
+end
+
+[P_curve,U_rated] = Power_curve(P_rated,rho,U_ci,U_co,c_p,D,eff);
 
 E_y=Yearly_energy(P_curve,U_ci,U_co,f_curve);
 
@@ -82,23 +105,27 @@ min_tip_speed=min_rot_speed*D/2;
 max_tip_speed=max_rot_speed*D/2;
 
 %% TORQUE CALCULATOR
-Q = torque(P_curve, U_array, D, lambda_design);
+Q = torque(P_curve, U_co, D, lambda_design);
 
 
 %% PLOT RESULTS
 figure;
-plot(1:ceil(max(U_array)), P_curve);
+plot(1:U_co, P_curve);
 title('Power curve');
 xlabel('Power [W]');
 ylabel('Wind speed [m/s]');
 axis tight
 
 figure;
+if a==0 && k==0
+    histfit(U_array, ceil(max(U_array)), 'wbl');
+else
+    plot(f_curve);
+end
 title('Weibull distribution');
 xlabel('Wind speed (m/s)');
 ylabel('Probability');
 axis tight
-histfit(U_array, ceil(max(U_array)), 'wbl');
 
 figure;
 plot(D_array, LPC_array);
