@@ -12,8 +12,8 @@ rho=1.225; % air density at hub level in kg/m3
 P_original=5*10^6; % original turbine rated power in W
 D_original=126.5; % original turbine diameter in W
 h_original=90; % original turbine hub height in m
-C_original=10^6; % original turbine installation costs in EUR
-L_original=20; % original turbine lifetime in years
+C_equivalent=11.193*10^6; % equivalent turbine installation costs in EUR
+L_equivalent=20; % equivalent turbine lifetime in years
 U_ci=2; % assumed cut-in speed in m/s
 U_co=25; % assumed cut-out speed in m/s
 c_p=0.482; % assumed power coefficient
@@ -95,8 +95,7 @@ LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
 CF=E_y/P_rated/(3600*24*365);
 
 %% ENERGY COST CALCULATOR
-C=C_original*LPC*E_y; % installation cost for designed turbine, assuming linear scaling (?)
-E_cost=C/E_y/L_original; % energy cost for designed turbine, assuming lifetime of x years (?)
+E_cost=C_equivalent/E_y/L_original; % energy cost for designed turbine, based on an equivalent 3.5MW turbine
 
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
