@@ -44,7 +44,7 @@ for D=(0.8*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
         wind_speed_factor=Speed_profile(1, z_0, alpha, h_0, h_hub); % shift speed to hub height
         f_curve = [];
         for i = 1:U_co*2
-            f_curve(i) = (k/a)*((i/wind_speed_factor/a)^(k-1))*exp(-(i/wind_speed_factor/a)^k); % if shape and scale parameters are known, define Weibull curve by them
+            f_curve(i) = (k/a)*(((i/wind_speed_factor)/a)^(k-1))*exp(-((i/wind_speed_factor)/a)^k); % if shape and scale parameters are known, define Weibull curve by them
         end
         f_curve=f_curve/sum(f_curve);
     end
@@ -59,7 +59,7 @@ for D=(0.8*D_original*P_rated/P_original):(2*D_original*P_rated/P_original)
     LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
 
     %% CAPACITY FACTOR CALCULATOR
-    CF=E_y/P_rated/(3600*24*365);
+    CF=E_y/(P_rated*3600*24*365);
 
     %% VALUE STORAGE
     D_array=[D_array D];
@@ -77,7 +77,7 @@ if a==0 && k==0
     U_array=Speed_profile(U_0, z_0, alpha, h_0, h_hub);
     f_curve=Weibull_regressor(U_array);
 else 
-    h_hub=h_original*D/D_original
+    h_hub=h_original*D/D_original;
     wind_speed_factor=Speed_profile(1, z_0, alpha, h_0, h_hub);
     f_curve = [];
     for i = 1:U_co*2
@@ -92,15 +92,15 @@ E_y=Yearly_energy(P_curve,U_ci,U_co,f_curve);
 
 LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
 
-CF=E_y/P_rated/(3600*24*365);
+CF=E_y/(P_rated*3600*24*365);
 
 %% ENERGY COST CALCULATOR
-E_cost=C_equivalent/E_y/L_original; % energy cost for designed turbine, based on an equivalent 3.5MW turbine
+%E_cost=C_equivalent/E_y/L_original; % energy cost for designed turbine, based on an equivalent 3.5MW turbine
 
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
 min_rot_speed = omega_min(U_ci, lambda_design, D); % calculate minimum rotation speed
-max_rot_speed = omega_max(U_rated, lambda_design, D); % calculate maximum rotation speed
+max_rot_speed = omega_max(U_rated, lambda_design, D) % calculate maximum rotation speed
 
 if max_rot_speed>rot_speed_limit
     disp('Calculated maximum rotation speed is higher than the set rotation speed limit!')
@@ -110,38 +110,39 @@ min_tip_speed=min_rot_speed*D/2;
 max_tip_speed=max_rot_speed*D/2;
 
 %% TORQUE CALCULATOR
-Q = torque(P_curve, U_co, D, lambda_design);
+Q_curve = torque(P_curve, U_co, D, lambda_design);
+Q_max = max(Q)
 
 
 %% PLOT RESULTS
-figure;
-plot(1:U_co, P_curve);
-title('Power curve');
-xlabel('Power [W]');
-ylabel('Wind speed [m/s]');
-axis tight
+%figure;
+%plot(1:U_co, P_curve);
+%title('Power curve');
+%xlabel('Power [W]');
+%ylabel('Wind speed [m/s]');
+%axis tight
 
-figure;
-if a==0 && k==0
-    histfit(U_array, ceil(max(U_array)), 'wbl');
-else
-    plot(f_curve);
-end
-title('Weibull distribution');
-xlabel('Wind speed (m/s)');
-ylabel('Probability');
-axis tight
+%figure;
+%if a==0 && k==0
+%    histfit(U_array, ceil(max(U_array)), 'wbl');
+%else
+%    plot(f_curve);
+%end
+%title('Weibull distribution');
+%xlabel('Wind speed (m/s)');
+%ylabel('Probability');
+%axis tight
 
-figure;
-plot(D_array, LPC_array);
-title('LPC-diameter plot');
-xlabel('Diameter [m]');
-ylabel('LPC [1/J]');
-axis tight
+%figure;
+%plot(D_array, LPC_array);
+%title('LPC-diameter plot');
+%xlabel('Diameter [m]');
+%ylabel('LPC [1/J]');
+%axis tight
 
-figure;
-plot(D_array, CF_array);
-title('CF-diameter plot');
-xlabel('Diameter [m]');
-ylabel('Capacity factor');
-axis tight
+%figure;
+%plot(D_array, CF_array);
+%title('CF-diameter plot');
+%xlabel('Diameter [m]');
+%ylabel('Capacity factor');
+%axis tight

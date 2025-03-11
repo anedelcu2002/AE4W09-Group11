@@ -4,8 +4,8 @@ function [Q] = torque(P_curve, U_co, D, lambda)
 
     omega=[];
     for i=1:U_co
-        omega(i)=lambda*i/(D/2);
+        omega(i)=(lambda*i)/(D/2);
     end
-    Q = P_curve/omega;
+    Q = P_curve./omega;
 
 end
