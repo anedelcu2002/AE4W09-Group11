@@ -111,7 +111,7 @@ max_tip_speed=max_rot_speed*D/2;
 
 %% TORQUE CALCULATOR
 Q_curve = torque(P_curve, U_co, D, lambda_design);
-Q_max = max(Q)
+Q_max = max(Q_curve)
 
 
 %% PLOT RESULTS
@@ -134,15 +134,15 @@ Q_max = max(Q)
 %axis tight
 
 %figure;
-%plot(D_array, LPC_array);
-%title('LPC-diameter plot');
-%xlabel('Diameter [m]');
-%ylabel('LPC [1/J]');
-%axis tight
+plot(D_array, LPC_array);
+title('LPC-diameter plot');
+xlabel('Diameter [m]');
+ylabel('LPC [1/J]');
+axis tight
 
-%figure;
-%plot(D_array, CF_array);
-%title('CF-diameter plot');
-%xlabel('Diameter [m]');
-%ylabel('Capacity factor');
-%axis tight
+figure;
+plot(D_array, CF_array);
+title('CF-diameter plot');
+xlabel('Diameter [m]');
+ylabel('Capacity factor');
+axis tight
