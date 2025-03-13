@@ -7,7 +7,7 @@ NREL5MW = load("FASTTool\NREL5MW.mat");
 %% Run the functions.
 lambda = 7;  % TODO: get value for NREL5MW turbine.
 AnalyticBlade5MW = analytic_chord_and_twist_for_blade(NREL5MW.Blade, NREL5MW.Airfoil, lambda);
-
+a=5;
 
 %% Plot
 figure;
