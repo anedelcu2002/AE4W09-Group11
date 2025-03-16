@@ -39,7 +39,7 @@ rho = 1.225;
 sigma_r = @(r) (B*Chord(r))/(2*pi*r); % Chord solidity
 
 %% BEM
-mu = linspace(0.2,1,25); %First entry depends on where cylinder ends
+mu = linspace(0.2,1,100); %First entry depends on where cylinder ends
 rRoot = mu(1)*R;
 dr = mu(2)-mu(1); % deltar
 mu = mu + 0.5*dr; % Shift radius location to be exactly in middle of segments
