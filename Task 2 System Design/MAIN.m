@@ -1,8 +1,6 @@
 % problems to check: 
 % currently all terms are defined and calculated as arrays of integers, starting from 1
 
-clear all;
-
 %% INPUT DATA
 U_0=[1,1,2,2,3,3,3,4,4,4,4,5,5,5,6,6,7,7,8,9,10,11,12]; % measured wind speed at altitude h_0 in m/s
 z_0=0.1; % surface roughness during measurement in m
@@ -100,7 +98,7 @@ CF=E_y/(P_rated*3600*24*365);
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
 min_rot_speed = omega_min(U_ci, lambda_design, D); % calculate minimum rotation speed
-max_rot_speed = omega_max(U_rated, lambda_design, D) % calculate maximum rotation speed
+max_rot_speed = omega_max(U_rated, lambda_design, D); % calculate maximum rotation speed
 
 if max_rot_speed>rot_speed_limit
     disp('Calculated maximum rotation speed is higher than the set rotation speed limit!')
@@ -111,7 +109,7 @@ max_tip_speed=max_rot_speed*D/2;
 
 %% TORQUE CALCULATOR
 Q_curve = torque(P_curve, U_co, D, lambda_design);
-Q_max = max(Q_curve)
+Q_max = max(Q_curve);
 
 
 %% PLOT RESULTS
