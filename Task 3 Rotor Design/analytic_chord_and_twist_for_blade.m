@@ -28,8 +28,8 @@ for i = 1:length(Blade.IFoil)
 end
 
 [twist_rad, chord] = calc_ideal_chord_and_twist(lambda, alpha_rad, cl, Blade.Radius);
-Blade.Chord = chord;
-Blade.Twist = rad2deg(twist_rad);
+Blade.Chord = chord';
+Blade.Twist = rad2deg(twist_rad');
 end
 
 
