@@ -1,7 +1,7 @@
 function [r_list] = gbx_design(r_total, m, types)
     % function that calculates the ratio per stage
-    plan_limit = 4;%?????
-    para_limit = 7;%?????
+    plan_limit = 7;%?????
+    para_limit = 5;%?????
 
     r_approx = nthroot(r_total,m);
     r_list = ones(1,m);

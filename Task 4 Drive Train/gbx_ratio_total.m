@@ -7,7 +7,7 @@ function [r_total] = gbx_ratio_total(Omega_LSS_max, Omega_LSS_min, Omega_HSS_max
         disp('Cant find propper scaling ratio')
     end
 
-    r_total = r_min + 0.1*(r_max - r_min);
+    r_total = r_min + 0.5*(r_max - r_min);
 
     if r_total > r_limit
         disp('Total Gearbox ratio exceeds set limit')
