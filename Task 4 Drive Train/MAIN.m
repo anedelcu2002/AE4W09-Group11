@@ -27,7 +27,7 @@ f_HSS_max = Omega_HSS_max/(2*pi);
 
 eff_gbx = gbx_eff(r_list,stage_types)
 
-V_gen = gen_sizing(F_d, P_r, Omega_HSS_max);
+V_gen = gen_sizing(F_d, P_r, Omega_HSS_max, eff_gbx);
 l_s = gen_length(V_gen, r_s);
 
 [M_gen, J_gen] = gen_mass_inertia(r_s, l_s, 1000);
