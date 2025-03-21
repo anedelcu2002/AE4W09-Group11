@@ -33,7 +33,7 @@ lambda = 8;
 lambda_old = 7;
 
 R = 143/2;
-R_old = 126;
+R_old = 126/2;
 
 analyticBlade = analytic_chord_and_twist_for_blade(BulgAir.Blade, BulgAir.Airfoil, lambda);
 scaledBlade = scale_chord_and_twist_for_blade(NREL5MW.Blade, lambda_old, lambda, R);
@@ -64,33 +64,39 @@ legend('NREL 5 MW', 'analytic 3.5 MW', 'scaled 3.5 MW');
 
 
 %% Let's now make our final twist and chord distribution.
-% We want our scaled solution near the root because structural effects
-% dominate. Near the tip, we want our twist and chord to be closer to the
-% analytic solution for optimal aerodynamic performance. Finally, at the
-% tip we want to follow the scaled solution because of tip unloading (good
-% for noise I think).
 r_n = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);  % r/R
-analytic_weighting = zeros(size(r_n));
-analytic_weighting(r_n > 0.6) = 1;
-analytic_weighting(r_n > 0.95) = 0;
 
-% Before we do the weighting, we need to replace the nans and infs in the 
-% analytic calculation.
-analyticBladeTwist = analyticBlade.Twist;
-analyticBladeChord = analyticBlade.Chord;
-analyticBladeTwist(isnan(analyticBladeTwist)) = 0;
-analyticBladeChord(isinf(analyticBladeChord)) = 0;
+% For the twist, we want a smooth twist distribution that fits the optimal
+% aerodynamic solution as well as possible. Near the root the optimal twist
+% is undefined so we ignore it.
+tempTwist = analyticBlade.Twist;
+noTwist = isnan(tempTwist);
+tempTwist = tempTwist(~noTwist);
 
-twist_weighted = analytic_weighting .* analyticBladeTwist + (1 - analytic_weighting) .* scaledBlade.Twist;
-chord_weighted = analytic_weighting .* analyticBladeChord + (1 - analytic_weighting) .* scaledBlade.Chord;
-
-% Now fit to that data.
-twist_p = polyfit(r_n, twist_weighted, 5);
-chord_p = polyfit(r_n, chord_weighted, 5);
-
-% And apply those coefficients.
+% Fit a polynomial to this data.
+twist_p = polyfit(r_n(~noTwist), tempTwist, 5);
 twist = polyval(twist_p, r_n);
+
+% Set the noTwist region so that it smoothly switches to the twisted
+% region.
+twist(noTwist) = twist(find(~noTwist, 1));
+
+
+% For the chord, we want our scaled scaled solution near the root because
+% structural effects dominate. Near the tip, we want our chord to be closer
+% to the analytic solution for optimal aerodynamic performance. 
+w = zeros(size(r_n));
+w(r_n > 0.6) = 1;
+w(r_n > 0.95) = 0;
+
+tempChord = analyticBlade.Chord;
+tempChord(isinf(tempChord)) = 0;
+
+chord_weighted = w .* tempChord + (1 - w) .* scaledBlade.Chord;
+
+chord_p = polyfit(r_n, chord_weighted, 5);
 chord = polyval(chord_p, r_n);
+
 
 
 %% Let's plot that.
@@ -124,5 +130,8 @@ legend('NREL 5 MW', 'analytic 3.5 MW', 'scaled 3.5 MW', 'fitted 3.5 MW');
 %% And finally, let's save the results.
 BulgAir.Blade.Twist = twist;
 BulgAir.Blade.Chord = chord;
+
+% Fix airfoil naming
+BulgAir.Airfoil.Name = cellfun(@(x) char(x), BulgAir.Airfoil.Name, 'UniformOutput', false);
 
 save("BulgAirChordTwist.mat", "-struct", "BulgAir")

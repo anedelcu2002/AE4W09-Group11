@@ -5,13 +5,22 @@
 
 %% Stress, deflection, and natural stiffness calculation functions
 
-function stress = stress_calculation(r, m, c, F_in_plane, F_out_of_plane, EI_in_plane, EI_out_of_plane)
+% make sure to unit test these functions, they are coded by alex so inherently wrong af!
+
+function stress = stress_calculation(r, m, c, t, F_in_plane, F_out_of_plane, EI_in_plane, EI_out_of_plane)
     stations=length(r);
     stress=zeros(stations);
     for i=1:stations
-        stress(i)=sum(F_in_plane(i:stations).*(r(i:stations)-r(i)))/EI_in_plane+sum(F_out_of_plane(i:stations).*...
-            (r(i:stations)-r(i)))/EI_out_of_plane; % need to multiply by distance from centroid, which is airfoil thickness (=t/c * c)
+        stress(i)=sum(F_in_plane(i:stations).*(r(i:stations)-r(i)))*(t/2)/EI_in_plane+sum(F_out_of_plane(i:stations).*...
+            (r(i:stations)-r(i)))*(t/2)/EI_out_of_plane;
     end
+end
+
+function [deflection_in_plane, deflection_out_of_plane] = deflection_calculation(r, F_in_plane, F_out_of_plane, EI_in_plane, EI_out_of_plane)
+    shear_force_in_plane=cumtrapz(r, cumtrapz(r, F_in_plane));
+    shear_force_out_of_plane=cumtrapz(r, cumtrapz(r, F_out_of_plane)); % shear q equivalent to EI*y''
+    deflection_in_plane=cumtrapz(r, cumtrapz(r, shear_force_in_plane/EI_in_plane));
+    deflection_out_of_plane=cumtrapz(r, cumtrapz(r, shear_force_out_of_plane/EI_out_of_plane));
 end
 
 

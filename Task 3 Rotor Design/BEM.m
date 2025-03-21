@@ -52,7 +52,7 @@ B = 3; % Number of Blades
 R = 143/2; % Insert correct rotor radius
 Pitch = 0; % NREL 5 MW has 0 set pitch but this could change
 
-data = load("BulgAirChordTwist.mat")
+data = load("BulgAirChordTwist.mat");
 Twist = data.Blade.Twist;
 Chord = data.Blade.Chord;
 
