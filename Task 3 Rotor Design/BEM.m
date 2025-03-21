@@ -137,7 +137,7 @@ for j = 1:length(mu)
     cond = (aDiff <= 1e-5 && aPrimeDiff <= 1e-5);
     i = i + 1;
     end
-    FAxial(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(r);
+    FAxial(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(r); 
     FTang(1,j) = Cy*0.5*rho*(Uapp^2)*Chord(r);
     CQ(1,j) = 4*aprime(i,j)*(1-a(i,j))*lambda*mu(j);
     CP(1,j) = 4*a(i,j)*(1-a(i,j))^2;
