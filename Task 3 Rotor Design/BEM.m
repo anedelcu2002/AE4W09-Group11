@@ -49,11 +49,12 @@ ylabel("C_l")
 %% Rotor Parameters
 
 B = 3; % Number of Blades
-R = 72.5; % Insert correct rotor radius
+R = 143/2; % Insert correct rotor radius
 Pitch = 0; % NREL 5 MW has 0 set pitch but this could change
 
-Twist = @(r) 14*(1-(r/R)); % Analytical equation for our turbine
-Chord = @(r) 3*(1-(r/R)) + 1; % Analytical equation for our turbine
+data = load("BulgAirChordTwist.mat")
+Twist = data.Blade.Twist;
+Chord = data.Blade.Chord;
 
 %% Operational Specs
 
@@ -61,14 +62,17 @@ lambda = 8; %Design tip speed ratio
 U0 = 7.5; %U_infinity, average wind speed
 rho = 1.225;
 
-sigma_r = @(r) (B*Chord(r))/(2*pi*r); % Chord solidity
 
 %% BEM
-mu = linspace(0,1,49); %First entry depends on where cylinder ends
-rRoot = mu(1)*R;
-dr = mu(2)-mu(1); % deltar
-mu = mu + 0.5*dr; % Shift radius location to be exactly in middle of segments
-mu(end) = []; % Remove last entry since that is not on the blade
+NREL5MW = load("..\FASTTool\NREL5MW.mat");
+BulgAir = load("BulgAir.mat").BulgAir;
+
+r_n = NREL5MW.Blade.Radius / NREL5MW.Blade.Radius(end);
+r_n_bulgAir = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
+BulgAir.Blade.Radius = interp1(r_n_bulgAir, BulgAir.Blade.Radius, r_n);
+BulgAir.Blade.NFoil = interp1(r_n_bulgAir, BulgAir.Blade.NFoil, r_n, 'nearest');
+mu = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
+
 
 omega = (lambda*U0)/R; %[Hz]
 a = 0.3 * ones(1,length(mu)); % Initialize axial induction factor along blade span
@@ -103,12 +107,12 @@ for j = 1:length(mu)
         Uapp = sqrt(UR^2 + UTang^2);
 
         phi(i,j) = atand(UR/UTang); % Inflow angle
-        alpha(i,j) = phi(i,j) - Twist(r) - Pitch; % AoA
+        alpha(i,j) = phi(i,j) - Twist(j) - Pitch; % AoA
 
         [Cl,Cd] = interpolate_polars(Airfoil,alpha(i,j)); % Interpolation to find polars
         Cx = Cl*cosd(phi(i,j)) + Cd*sind(phi(i,j));
         Cy = Cl*sind(phi(i,j)) - Cd*cosd(phi(i,j));
-        Ct(i,j) = ((Uapp^2)*Cx*Chord(r)*B)/((U0^2)*2*pi*r);
+        Ct(i,j) = ((Uapp^2)*Cx*Chord(j)*B)/((U0^2)*2*pi*r);
         
         a(i+1,j) = 0.5*(1-sqrt(1-Ct(i,j)));
 
@@ -128,15 +132,15 @@ for j = 1:length(mu)
            % a(i+1,j) = 0.5 - (sqrt(1-Ct)/2);
         end
 
-    aprime(i+1,j) = ((Uapp^2)*Chord(r)*Cy*B*R)/(8*pi*(r^2)*(U0^2)*(1-a(i+1,j))*lambda);
+    aprime(i+1,j) = ((Uapp^2)*Chord(j)*Cy*B*R)/(8*pi*(r^2)*(U0^2)*(1-a(i+1,j))*lambda);
 %% Tolerance check
     aDiff = abs(a(i+1,j) - a(i,j));
     aPrimeDiff = abs(aprime(i+1,j) - aprime(i,j));
     cond = (aDiff <= 1e-5 && aPrimeDiff <= 1e-5);
     i = i + 1;
     end
-    FAxial(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(r); 
-    FTang(1,j) = Cy*0.5*rho*(Uapp^2)*Chord(r);
+    FAxial(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(j); 
+    FTang(1,j) = Cy*0.5*rho*(Uapp^2)*Chord(j);
     CQ(1,j) = 4*aprime(i,j)*(1-a(i,j))*lambda*mu(j);
     CP(1,j) = 4*a(i,j)*(1-a(i,j))^2;
     CT(1,j) = 4*a(i,j)*(1-a(i,j));
@@ -148,6 +152,6 @@ plot(mu,FAxial,"DisplayName","Axial Force")
 plot(mu,FTang,"DisplayName","Tangential Force")
 title("Force in each blade section along span")
 xlabel("Spanwise point \mu")
-ylabel("Force [N]")
+ylabel("Force per unit span [N/m]")
 legend
 grid on
