@@ -24,8 +24,6 @@ function [deflection_in_plane, deflection_out_of_plane] = deflection_calculation
 end
 
 
-
-
 %% Parameter initialization
 
 BEM % not too fond of doing this
