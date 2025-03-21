@@ -73,6 +73,15 @@ BulgAir.Blade.Radius = interp1(r_n_bulgAir, BulgAir.Blade.Radius, r_n);
 BulgAir.Blade.NFoil = interp1(r_n_bulgAir, BulgAir.Blade.NFoil, r_n, 'nearest');
 mu = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
 
+rFace = zeros(1,length(mu)+1);
+rFace(1) = 0;
+rFace(end) = R;
+for i = 2:length(mu)
+    rFace(i) = 0.5*mu(i)*R + 0.5*mu(i-1)*R;
+end
+for i = 1:length(mu)
+    dr(i) = rFace(i+1)-rFace(i);
+end
 
 omega = (lambda*U0)/R; %[Hz]
 a = 0.3 * ones(1,length(mu)); % Initialize axial induction factor along blade span
@@ -139,17 +148,23 @@ for j = 1:length(mu)
     cond = (aDiff <= 1e-5 && aPrimeDiff <= 1e-5);
     i = i + 1;
     end
-    FAxial(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(j); 
-    FTang(1,j) = Cy*0.5*rho*(Uapp^2)*Chord(j);
+
+%% Results
+    FAxialSpan(1,j) = Cx*0.5*rho*(Uapp^2)*Chord(j); 
+    FTangSpan(1,j) = Cy*0.5*rho*(Uapp^2)*Chord(j);
     CQ(1,j) = 4*aprime(i,j)*(1-a(i,j))*lambda*mu(j);
     CP(1,j) = 4*a(i,j)*(1-a(i,j))^2;
     CT(1,j) = 4*a(i,j)*(1-a(i,j));
 end
 
+%% Values needed for structural integration
+    FAxial = FAxialSpan(1,:).*dr; 
+    FTang = FTangSpan(1,:).*dr;
+
 figure
 hold on
-plot(mu,FAxial,"DisplayName","Axial Force")
-plot(mu,FTang,"DisplayName","Tangential Force")
+plot(mu,FAxialSpan,"DisplayName","Axial Force")
+plot(mu,FTangSpan,"DisplayName","Tangential Force")
 title("Force in each blade section along span")
 xlabel("Spanwise point \mu")
 ylabel("Force per unit span [N/m]")
