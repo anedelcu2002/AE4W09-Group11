@@ -31,7 +31,7 @@ calculate_chord_and_twist;
 BEM;
 
 station_array=BulgAir.Blade.Radius; % stations in meters
-mass_array=BulgAir.Blade.Mass*(145/126)^3; % distributed mass in kilograms, scaled by R^3 from the original NREL 5MW turbine
+mass_array=BulgAir.Blade.Mass*(143/126)^3; % distributed mass in kilograms, scaled by R^3 from the original NREL 5MW turbine
 in_plane_force_array=abs(FTang); % in-plane force in newtons
 out_of_plane_force_array=abs(FAxial); % out-of-plane force in newtons
 twist_array=Twist*2*pi/360; % twist array in radians
@@ -70,8 +70,8 @@ in_plane_force_array=in_plane_force_array+transpose(mass_array.*9.81); % maximum
 
 BEM_NREL;
 
-station_array_NREL=NREL5MW.Blade.Radius*145/126; % stations in meters
-mass_array_NREL=NREL5MW.Blade.Mass*(145/126)^3; % distributed mass in kilograms
+station_array_NREL=NREL5MW.Blade.Radius*143/126; % stations in meters
+mass_array_NREL=NREL5MW.Blade.Mass*(143/126)^3; % distributed mass in kilograms
 in_plane_force_array_NREL=abs(FTang_NREL); % in-plane force in newtons
 out_of_plane_force_array_NREL=abs(FAxial_NREL); % out-of-plane force in newtons
 twist_array_NREL=NREL5MW.Blade.Twist*2*pi/360; % twist array in radians
