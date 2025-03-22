@@ -11,7 +11,7 @@ function [P_curve,U_r] = Power_curve(P_r,rho,U_ci,U_co,C_p,D,eff)
     for i = 1:U_co
         if  i < U_ci
             P_curve(i) = 0;
-        elseif i < U_r
+        elseif i <= U_r
             P_curve(i) = 0.5*eff*rho*C_p*pi*(R^2)*(i^3);
         elseif i < U_co
             P_curve(i) = P_r;

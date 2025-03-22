@@ -109,16 +109,18 @@ max_tip_speed=max_rot_speed*D/2;
 
 %% TORQUE CALCULATOR
 Q_curve = torque(P_curve, U_co, D, lambda_design);
-Q_max = max(Q_curve);
+Q_max = max(Q_curve); %Rated
+Q_min = min(Q_curve); %At cut-in
 
+save('P_curve.mat','P_curve')
 
 %% PLOT RESULTS
-%figure;
-%plot(1:U_co, P_curve);
-%title('Power curve');
-%xlabel('Power [W]');
-%ylabel('Wind speed [m/s]');
-%axis tight
+figure;
+plot(1:U_co, P_curve);
+title('Power curve');
+ylabel('Power [W]');
+xlabel('Wind speed [m/s]');
+axis tight
 
 %figure;
 %if a==0 && k==0
@@ -132,15 +134,15 @@ Q_max = max(Q_curve);
 %axis tight
 
 %figure;
-plot(D_array, LPC_array);
-title('LPC-diameter plot');
-xlabel('Diameter [m]');
-ylabel('LPC [1/J]');
-axis tight
+%plot(D_array, LPC_array);
+%title('LPC-diameter plot');
+%xlabel('Diameter [m]');
+%ylabel('LPC [1/J]');
+%axis tight
 
-figure;
-plot(D_array, CF_array);
-title('CF-diameter plot');
-xlabel('Diameter [m]');
-ylabel('Capacity factor');
-axis tight
+%figure;
+%plot(D_array, CF_array);
+%title('CF-diameter plot');
+%xlabel('Diameter [m]');
+%ylabel('Capacity factor');
+%axis tight
