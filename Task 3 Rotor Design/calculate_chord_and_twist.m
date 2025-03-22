@@ -1,5 +1,5 @@
 %% Reset and load the Airfoil data
-close all; clearvars; clc;
+%close all; clearvars; clc;
 
 % BulgAir includes the data of our new airfoils in the airfoil struct and
 % defines the airfoil distribution in the blade in the blade struct.
