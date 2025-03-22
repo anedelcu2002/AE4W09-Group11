@@ -35,7 +35,7 @@ station_array=BulgAir.Blade.Radius; % stations in meters
 mass_array=BulgAir.Blade.Mass; % distributed mass in kilograms
 in_plane_force_array=abs(FTang); % in-plane force in newtons
 out_of_plane_force_array=abs(FAxial); % out-of-plane force in newtons
-twist_array=Twist*2*pi/180; % twist array in radians
+twist_array=Twist*2*pi/360; % twist array in radians
 chord_array=Chord; % chord length in meters
 flap_stiffness_array=BulgAir.Blade.EIflap; % flap stiffness in Nm2, oriented by structural twist angle, assumed equal to aerodynamic twist angle
 edge_stiffness_array=BulgAir.Blade.EIedge;
@@ -43,22 +43,23 @@ edge_stiffness_array=BulgAir.Blade.EIedge;
 %% Calculate airfoil thickness at each station
 
 airfoil_thickness_array=BulgAir.Blade.NFoil;
-for i=airfoil_thickness_array
-    if i==1 % Cylinder
+for i=1:48
+    if airfoil_thickness_array(i)==1 % Cylinder
         airfoil_thickness_array(i)=sqrt(2)/2; % for a cylinder, the spar cap is a square inscribed within the circle
-    elseif i==2 % DU 97-W-300
+    elseif airfoil_thickness_array(i)==2 % DU 97-W-300
         airfoil_thickness_array(i)=0.3;
-    elseif i==3 % Blend 1
+    elseif airfoil_thickness_array(i)==3 % Blend 1
         airfoil_thickness_array(i)=0.2545; % for a blend, thickness ratio is average of the blended airfoils
-    elseif i==4 % NACA 644
+    elseif airfoil_thickness_array(i)==4 % NACA 644
         airfoil_thickness_array(i)=0.209;
-    elseif i==5 % Blend 2
+    elseif airfoil_thickness_array(i)==5 % Blend 2
         airfoil_thickness_array(i)=0.1945;
-    elseif i==6 % NACA 643
+    elseif airfoil_thickness_array(i)==6 % NACA 643
         airfoil_thickness_array(i)=0.18;
     end
 end
 airfoil_thickness_array=airfoil_thickness_array.*Chord;
+
 
 %% Calculate in-plane/out-of-plane stiffnesses and forces
 
