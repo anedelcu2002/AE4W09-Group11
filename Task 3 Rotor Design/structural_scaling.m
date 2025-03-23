@@ -70,15 +70,15 @@ in_plane_force_array=in_plane_force_array+transpose(mass_array.*9.81); % maximum
 
 BEM_NREL;
 
-station_array_NREL=NREL5MW.Blade.Radius*143/126; % stations in meters
-mass_array_NREL=NREL5MW.Blade.Mass*(143/126)^3; % distributed mass in kilograms
+station_array_NREL=NREL5MW.Blade.Radius; % stations in meters
+mass_array_NREL=NREL5MW.Blade.Mass; % distributed mass in kilograms
 in_plane_force_array_NREL=abs(FTang_NREL); % in-plane force in newtons
 out_of_plane_force_array_NREL=abs(FAxial_NREL); % out-of-plane force in newtons
 twist_array_NREL=NREL5MW.Blade.Twist*2*pi/360; % twist array in radians
 chord_array_NREL=NREL5MW.Blade.Chord; % chord length in meters
-flap_stiffness_array_NREL=NREL5MW.Blade.EIflap*(143/126)^4; 
-edge_stiffness_array_NREL=NREL5MW.Blade.EIedge*(143/126)^4;
-airfoil_thickness_array_NREL=NREL5MW.Blade.Thickness*143/126;
+flap_stiffness_array_NREL=NREL5MW.Blade.EIflap; 
+edge_stiffness_array_NREL=NREL5MW.Blade.EIedge;
+airfoil_thickness_array_NREL=NREL5MW.Blade.Thickness;
 
 in_plane_stiffness_array_NREL=flap_stiffness_array_NREL.*cos(abs(twist_array))+edge_stiffness_array_NREL.*sin(abs(twist_array));
 out_of_plane_stiffness_array_NREL=edge_stiffness_array_NREL.*cos(abs(twist_array))+flap_stiffness_array_NREL.*sin(abs(twist_array));

@@ -3,7 +3,7 @@
 %% Rotor Parameters
 
 B = 3; % Number of Blades
-R = 143/2; % Insert correct rotor radius
+R = 126; % Insert correct rotor radius
 Pitch = 0; % NREL 5 MW has 0 set pitch but this could change
 
 NREL5MW = load("NREL5MW.mat");
@@ -11,7 +11,7 @@ NREL5MW = load("NREL5MW.mat");
 %% Operational Specs
 
 lambda = 7.6; % Design tip speed ratio
-U0 = 7.5; % U_infinity, average wind speed
+U0 = 11.4; % U_infinity, average wind speed
 rho = 1.225;
 
 %% Airfoil data
