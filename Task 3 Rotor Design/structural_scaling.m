@@ -61,8 +61,8 @@ airfoil_thickness_array=airfoil_thickness_array.*Chord;
 
 %% Calculate in-plane/out-of-plane stiffnesses and forces
 
-in_plane_stiffness_array=flap_stiffness_array.*cos(abs(twist_array))+edge_stiffness_array.*sin(abs(twist_array));
-out_of_plane_stiffness_array=edge_stiffness_array.*cos(abs(twist_array))+flap_stiffness_array.*sin(abs(twist_array));
+in_plane_stiffness_array=edge_stiffness_array.*cos(abs(twist_array))+flap_stiffness_array.*sin(abs(twist_array));
+out_of_plane_stiffness_array=flap_stiffness_array.*cos(abs(twist_array))+edge_stiffness_array.*sin(abs(twist_array));
 
 in_plane_force_array=in_plane_force_array+transpose(mass_array.*9.81); % maximum load case scenario has the blade perpendicular to tower, distributed mass acts as bending load
 
