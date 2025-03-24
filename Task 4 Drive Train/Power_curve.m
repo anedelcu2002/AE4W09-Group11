@@ -1,6 +1,6 @@
 function [P_curve,U_r,U_range] = Power_curve(P_r_LSS,rho,U_ci,U_co,C_p,D,eff)
-    % calculates the power curve and rated speed based on the rated power P_r in W, the air density rho in kg/m3, the cut-in and cut-out speeds
-    % U_ci and U_co in m/s, the power coefficient C_p, the diameter D in m, the efficiency eff, and the speed time-series U_array in m/s
+    % calculates the power curve and rated speed based on the rated power P_r_LSS in W, the air density rho in kg/m3, the cut-in and cut-out speeds
+    % U_ci and U_co in m/s from part 2, the power coefficient C_p from part 3, the diameter D in m from part 2, the efficiency eff_total
 
     R = 0.5*D;
 
