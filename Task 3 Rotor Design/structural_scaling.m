@@ -153,5 +153,21 @@ thickness_factor=max([stress_factor, in_plane_deflection_factor, out_of_plane_de
 BulgAir.Blade.Mass=BulgAir.Blade.Mass*(143/126)^3*thickness_factor;
 BulgAir.Blade.EIflap=BulgAir.Blade.EIflap*(143/126)^4*thickness_factor;
 BulgAir.Blade.EIedge=BulgAir.Blade.EIedge*(143/126)^4*thickness_factor;
-BulgAir.Blade.Thickness=airfoil_thickness_array;
+airfoil_thickness_array=BulgAir.Blade.NFoil; % redefine airfoil thicknesses, this time with the correct airfoil thickness
+for i=1:48
+    if airfoil_thickness_array(i)==1 % Cylinder
+        airfoil_thickness_array(i)=1;
+    elseif airfoil_thickness_array(i)==2 % DU 97-W-300
+        airfoil_thickness_array(i)=0.3;
+    elseif airfoil_thickness_array(i)==3 % Blend 1
+        airfoil_thickness_array(i)=0.2545; 
+    elseif airfoil_thickness_array(i)==4 % NACA 644
+        airfoil_thickness_array(i)=0.209;
+    elseif airfoil_thickness_array(i)==5 % Blend 2
+        airfoil_thickness_array(i)=0.1945;
+    elseif airfoil_thickness_array(i)==6 % NACA 643
+        airfoil_thickness_array(i)=0.18;
+    end
+end
+BulgAir.Blade.Thickness=airfoil_thickness_array.*Chord;
 save("BulgAirChordTwist.mat", "-struct", "BulgAir")
