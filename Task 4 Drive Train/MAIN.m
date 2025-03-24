@@ -56,12 +56,35 @@ M_gbx = gbx_mass(Q_LSS_max) %Q_RATED
 
 
 %GENERATOR 
-V_gen = gen_sizing(F_d, P_r, Omega_HSS_max)
-l_s = gen_length(V_gen, r_s)
+V_gen = gen_sizing(F_d, P_r_HSS, Omega_HSS_max);
+l_s = gen_length(V_gen, r_s);
 
-[M_gen, J_gen] = gen_mass_inertia(r_s, l_s, rho)
+[M_gen, J_gen] = gen_mass_inertia(r_s, l_s, rho);
 
-M_nacel = M_con + M_gen + M_gbx
-eff_total = eff_con * eff_gen * eff_gbx
+M_drive_train = M_con + M_gen + M_gbx;
+eff_total = eff_con * eff_gen * eff_gbx;
+
+%POWER CURVE
+rho=1.225; % air density at hub level in kg/m3
+U_ci=2; % cut-in speed in m/s FROM TASK 2
+U_co=25; % cut-out speed in m/s FROM TASK 2
+c_p=0.43; % power coefficient FROM TASK 3
+D = 143;
+
+[P_output_curve,U_r,U_range] = Power_curve(P_r_LSS,rho,U_ci,U_co,c_p,D,eff_total);
+
+figure;
+hold on
+plot(U_range, P_output_curve, 'LineWidth', 1.5);
+%plot(1:U_co, P_curve)
+hold off
+xline(U_r, '--', 'LineWidth', 1.5);
+title('Power curve');
+ylabel('Power [W]');
+xlabel('Wind speed [m/s]');
+legend('Power curve', sprintf('U_r = %.2f m/s', U_r));
+ylim([0,3.6e6])
+xlim([0,U_co+2])
+grid on;
 
 
