@@ -66,7 +66,7 @@ out_of_plane_stiffness_array=flap_stiffness_array.*cos(abs(twist_array))+edge_st
 
 in_plane_force_array=in_plane_force_array+transpose(mass_array.*9.81); % maximum load case scenario has the blade perpendicular to tower, distributed mass acts as bending load
 
-%% Do the same for NREL 5MW scaled to 143m diameter
+%% Do the same for NREL 5MW
 
 BEM_NREL;
 
@@ -107,7 +107,7 @@ in_plane_stiffness_array, out_of_plane_stiffness_array);
 [max_in_plane_deflection, max_out_of_plane_deflection]=deflection_calculation(station_array, in_plane_force_array, out_of_plane_force_array,... 
 in_plane_stiffness_array, out_of_plane_stiffness_array);
 
-%% Plot results
+%% Plot results (while scaling deflections to 143m for clarity)
 figure;
 tiledlayout(3, 1)
 
@@ -121,19 +121,19 @@ title('Stress and deflection at every station')
 
 nexttile; hold on;
 plot(station_array, max_in_plane_deflection);
-plot(station_array_NREL, max_in_plane_deflection_NREL);
+plot(station_array_NREL*143/126, max_in_plane_deflection_NREL*143/126);
 grid;
 ylabel('In-plane Deflection')
 xlabel('Station')
 
 nexttile; hold on;
 plot(station_array, max_out_of_plane_deflection);
-plot(station_array_NREL, max_out_of_plane_deflection_NREL);
+plot(station_array_NREL*143/126, max_out_of_plane_deflection_NREL*143/126);
 grid;
 ylabel('Out-of-plane Deflection')
 xlabel('Station')
 
-legend('BulgAir', 'Scaled NREL 5MW');
+legend('BulgAir', 'Upscaled NREL 5MW');
 
 
 %% Maximum required thickness factor calculation
@@ -142,6 +142,16 @@ legend('BulgAir', 'Scaled NREL 5MW');
 
 stress_factor=max(maximum_stress./maximum_stress_NREL)
 
-in_plane_deflection_factor=max(max_in_plane_deflection/max_in_plane_deflection_NREL)
+in_plane_deflection_factor=max(max_in_plane_deflection/(max_in_plane_deflection_NREL*143/126))
 
-out_of_plane_deflection_factor=max(max_out_of_plane_deflection/max_out_of_plane_deflection_NREL)
+out_of_plane_deflection_factor=max(max_out_of_plane_deflection/(max_out_of_plane_deflection_NREL*143/126))
+
+thickness_factor=max([stress_factor, in_plane_deflection_factor, out_of_plane_deflection_factor]);
+
+%% Save new rotor properties to file
+
+BulgAir.Blade.Mass=BulgAir.Blade.Mass*(143/126)^3*thickness_factor;
+BulgAir.Blade.EIflap=BulgAir.Blade.EIflap*(143/126)^4*thickness_factor;
+BulgAir.Blade.EIedge=BulgAir.Blade.EIedge*(143/126)^4*thickness_factor;
+BulgAir.Blade.Thickness=airfoil_thickness_array;
+save("BulgAirChordTwist.mat", "-struct", "BulgAir")
