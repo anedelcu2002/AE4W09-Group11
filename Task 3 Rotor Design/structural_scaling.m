@@ -112,28 +112,55 @@ figure;
 tiledlayout(3, 1)
 
 nexttile; hold on;
-plot(station_array, maximum_stress);
-plot(station_array_NREL, maximum_stress_NREL);
+plot(station_array/71.5, maximum_stress);
+plot(station_array_NREL/63, maximum_stress_NREL);
 grid;
-ylabel('Maximum Stress/Elastic Modulus')
-xlabel('Station')
+ylabel('Maximum Stress/Elastic Modulus [-]')
+xlabel('r/R [-]')
 title('Stress and deflection at every station')
 
 nexttile; hold on;
-plot(station_array, max_in_plane_deflection);
-plot(station_array_NREL*143/126, max_in_plane_deflection_NREL*143/126);
+plot(station_array/71.5, max_in_plane_deflection);
+plot(station_array_NREL*143/126/71.5, max_in_plane_deflection_NREL*143/126);
 grid;
-ylabel('In-plane Deflection')
-xlabel('Station')
+ylabel('In-plane Deflection [m]')
+xlabel('r/R [-]')
 
 nexttile; hold on;
-plot(station_array, max_out_of_plane_deflection);
-plot(station_array_NREL*143/126, max_out_of_plane_deflection_NREL*143/126);
+plot(station_array/71.5, max_out_of_plane_deflection);
+plot(station_array_NREL*143/126/71.5, max_out_of_plane_deflection_NREL*143/126);
 grid;
-ylabel('Out-of-plane Deflection')
-xlabel('Station')
+ylabel('Out-of-plane Deflection [m]')
+xlabel('r/R [-]')
 
-legend('BulgAir', 'Upscaled NREL 5MW');
+legend('Designed 3.5MW', 'Upscaled NREL 5MW');
+
+figure;
+tiledlayout(3, 1)
+
+nexttile; hold on;
+plot(station_array/71.5, mass_array);
+plot(station_array_NREL/63, mass_array_NREL);
+grid;
+ylabel('Mass [kg]')
+xlabel('r/R [-]')
+title('Mass and flexural stiffness at each station')
+
+nexttile; hold on;
+plot(station_array/71.5, edge_stiffness_array);
+plot(station_array_NREL*143/126/71.5, edge_stiffness_array_NREL);
+grid;
+ylabel('Edge stiffness [Nm2]')
+xlabel('r/R [-]')
+
+nexttile; hold on;
+plot(station_array/71.5, flap_stiffness_array);
+plot(station_array_NREL*143/126/71.5, flap_stiffness_array_NREL);
+grid;
+ylabel('Flap stiffness [Nm2]')
+xlabel('r/R [-]')
+
+legend('Designed 3.5MW', 'Upscaled NREL 5MW');
 
 
 %% Maximum required thickness factor calculation
