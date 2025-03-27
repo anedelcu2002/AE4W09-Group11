@@ -88,50 +88,53 @@ end
 
 E_y=Yearly_energy(P_curve,U_ci,U_co,f_curve);
 
-LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original);
+LPC = LPC_calculator(E_y,D,D_original,P_rated,P_original)
 
-CF=E_y/(P_rated*3600*24*365);
+CF=E_y/(P_rated*3600*24*365)
 
 %% ENERGY COST CALCULATOR
-%E_cost=C_equivalent/E_y/L_original; % energy cost for designed turbine, based on an equivalent 3.5MW turbine
+E_cost=C_equivalent/E_y/L_equivalent % energy cost for designed turbine, based on an equivalent 3.5MW turbine
 
 
 %% MINIMUM AND MAXIMUM TIP SPEED CALCULATOR
-min_rot_speed = omega_min(U_ci, lambda_design, D); % calculate minimum rotation speed
-max_rot_speed = omega_max(U_rated, lambda_design, D); % calculate maximum rotation speed
+min_rot_speed = omega_min(U_ci, lambda_design, D) % calculate minimum rotation speed
+max_rot_speed = omega_max(U_rated, lambda_design, D) % calculate maximum rotation speed
 
 if max_rot_speed>rot_speed_limit
     disp('Calculated maximum rotation speed is higher than the set rotation speed limit!')
 end
 
-min_tip_speed=min_rot_speed*D/2;
-max_tip_speed=max_rot_speed*D/2;
+min_tip_speed=min_rot_speed*D/2
+max_tip_speed=max_rot_speed*D/2
 
 %% TORQUE CALCULATOR
 Q_curve = torque(P_curve, U_co, D, lambda_design);
-Q_max = max(Q_curve);
-
+Q_max = max(Q_curve)
 
 %% PLOT RESULTS
-%figure;
-%plot(1:U_co, P_curve);
-%title('Power curve');
-%xlabel('Power [W]');
-%ylabel('Wind speed [m/s]');
+figure;
+P_curve=[P_curve(1:9) 3.5*10^6 P_curve(10:end-1) 3.5*10^6 0];
+U_plot=1:U_co;
+U_plot=[U_plot(1:9) 9 U_plot(10:end) 25];
+plot(U_plot, P_curve);
+title('Power curve');
+ylabel('Power [W]');
+xlabel('Wind speed [m/s]');
 %axis tight
 
-%figure;
-%if a==0 && k==0
-%    histfit(U_array, ceil(max(U_array)), 'wbl');
-%else
-%    plot(f_curve);
-%end
-%title('Weibull distribution');
-%xlabel('Wind speed (m/s)');
-%ylabel('Probability');
+figure;
+if a==0 && k==0
+    histfit(U_array, ceil(max(U_array)), 'wbl');
+else
+    f_curve=[0 f_curve];
+    plot(f_curve);
+end
+title('Weibull distribution');
+xlabel('Wind speed (m/s)');
+ylabel('Probability');
 %axis tight
 
-%figure;
+figure;
 plot(D_array, LPC_array);
 title('LPC-diameter plot');
 xlabel('Diameter [m]');
