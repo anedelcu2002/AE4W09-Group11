@@ -1,77 +1,59 @@
 
 
-%% Airfoil data
-Cylinder.dat = load("Cylinder.txt");
-Cylinder.alpha = Cylinder.dat(:,1);
-Cylinder.Cl = Cylinder.dat(:,2);
-Cylinder.Cd = Cylinder.dat(:,3);
-
-DU_airfoil.dat = load("DU_97W300.txt");
-DU_airfoil.alpha = DU_airfoil.dat(:,1);
-DU_airfoil.Cl = DU_airfoil.dat(:,2);
-DU_airfoil.Cd = DU_airfoil.dat(:,3);
-
-Blend1.dat = load("Blend DU_NACA.txt");
-Blend1.alpha = Blend1.dat(:,1);
-Blend1.Cl = Blend1.dat(:,2);
-Blend1.Cd = Blend1.dat(:,3);
-
-NACAMid.dat = load("NACA_644421.txt");
-NACAMid.alpha = NACAMid.dat(:,1);
-NACAMid.Cl = NACAMid.dat(:,2);
-NACAMid.Cd = NACAMid.dat(:,3);
-
-Blend2.dat = load("Blend NACA_NACA.txt");
-Blend2.alpha = Blend2.dat(:,1);
-Blend2.Cl = Blend2.dat(:,2);
-Blend2.Cd = Blend2.dat(:,3);
-
-NACAOut.dat = load("NACA_643218.txt");
-NACAOut.alpha = NACAOut.dat(:,1);
-NACAOut.Cl = NACAOut.dat(:,2);
-NACAOut.Cd = NACAOut.dat(:,3);
-
-AirfoilSet = [Cylinder DU_airfoil Blend1 NACAMid Blend2 NACAOut];
-
-figure
-hold on
-plot(DU_airfoil.alpha,DU_airfoil.Cl,"DisplayName","DU 97-W-300")
-plot(Blend1.alpha,Blend1.Cl,"DisplayName","Blend DU NACA");
-plot(NACAMid.alpha,NACAMid.Cl,"DisplayName","NACA 644421");
-plot(Blend2.alpha,Blend2.Cl,"DisplayName","Blend NACA NACA");
-plot(NACAOut.alpha,NACAOut.Cl,"DisplayName","NACA 643218");
-xlim([-20 20])
-grid on
-legend("Location",'best')
-xlabel("\alpha");
-ylabel("C_l")
-
 %% Rotor Parameters
 
 B = 3; % Number of Blades
-R = 143/2; % Insert correct rotor radius
+R = 126; % Insert correct rotor radius
 Pitch = 0; % NREL 5 MW has 0 set pitch but this could change
 
-data = load("BulgAirChordTwist.mat");
-Twist = data.Blade.Twist;
-Chord = data.Blade.Chord;
+NREL5MW = load("NREL5MW.mat");
 
 %% Operational Specs
 
-lambda = 8; %Design tip speed ratio
-U0 = 7.5; %U_infinity, average wind speed
+lambda = 7.6; % Design tip speed ratio
+U0 = 11.4; % U_infinity, average wind speed
 rho = 1.225;
 
+%% Airfoil data
+Airfoil1.alpha=NREL5MW.Airfoil.Alpha(1);
+Airfoil1.Cl=NREL5MW.Airfoil.Cl(1);
+Airfoil1.Cd=NREL5MW.Airfoil.Cd(1);
+
+Airfoil2.alpha=NREL5MW.Airfoil.Alpha(2);
+Airfoil2.Cl=NREL5MW.Airfoil.Cl(2);
+Airfoil2.Cd=NREL5MW.Airfoil.Cd(2);
+
+Airfoil3.alpha=NREL5MW.Airfoil.Alpha(3);
+Airfoil3.Cl=NREL5MW.Airfoil.Cl(3);
+Airfoil3.Cd=NREL5MW.Airfoil.Cd(3);
+
+Airfoil4.alpha=NREL5MW.Airfoil.Alpha(4);
+Airfoil4.Cl=NREL5MW.Airfoil.Cl(4);
+Airfoil4.Cd=NREL5MW.Airfoil.Cd(4);
+
+Airfoil5.alpha=NREL5MW.Airfoil.Alpha(5);
+Airfoil5.Cl=NREL5MW.Airfoil.Cl(5);
+Airfoil5.Cd=NREL5MW.Airfoil.Cd(5);
+
+Airfoil6.alpha=NREL5MW.Airfoil.Alpha(6);
+Airfoil6.Cl=NREL5MW.Airfoil.Cl(6);
+Airfoil6.Cd=NREL5MW.Airfoil.Cd(6);
+
+Airfoil7.alpha=NREL5MW.Airfoil.Alpha(7);
+Airfoil7.Cl=NREL5MW.Airfoil.Cl(7);
+Airfoil7.Cd=NREL5MW.Airfoil.Cd(7);
+
+Airfoil8.alpha=NREL5MW.Airfoil.Alpha(8);
+Airfoil8.Cl=NREL5MW.Airfoil.Cl(8);
+Airfoil8.Cd=NREL5MW.Airfoil.Cd(8);
+
+AirfoilSet = [Airfoil1 Airfoil2 Airfoil3 Airfoil4 Airfoil5 Airfoil6 Airfoil7 Airfoil8];
 
 %% BEM
-NREL5MW = load("..\FASTTool\NREL5MW.mat");
-BulgAir = load("BulgAir.mat").BulgAir;
 
-r_n = NREL5MW.Blade.Radius / NREL5MW.Blade.Radius(end);
-r_n_bulgAir = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
-BulgAir.Blade.Radius = interp1(r_n_bulgAir, BulgAir.Blade.Radius, r_n);
-BulgAir.Blade.NFoil = interp1(r_n_bulgAir, BulgAir.Blade.NFoil, r_n, 'nearest');
-mu = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
+mu = NREL5MW.Blade.Radius / NREL5MW.Blade.Radius(end);
+Twist=NREL5MW.Blade.Twist;
+Chord=NREL5MW.Blade.Chord;
 
 rFace = zeros(1,length(mu)+1);
 rFace(1) = 0;
@@ -98,18 +80,22 @@ for j = 1:length(mu)
 
         end
         r =  R*mu(j); % What radial section are we looking at
-        if mu(j) < 0.2 % Cylinder
+        if mu(j) < 0.106 % Cylinder
             Airfoil = AirfoilSet(1);
-        elseif mu(j) < 0.35 && mu(j) >= 0.2  % DU 97-W-300
+        elseif mu(j) < 0.154 && mu(j) >= 0.106 
             Airfoil = AirfoilSet(2);
-        elseif mu(j) < 0.45 && mu(j) >= 0.35 % Blend 1
+        elseif mu(j) < 0.217 && mu(j) >= 0.154
             Airfoil = AirfoilSet(3);
-        elseif mu(j) < 0.6 && mu(j) >= 0.45  % NACA 644
+        elseif mu(j) < 0.344 && mu(j) >= 0.217  
             Airfoil = AirfoilSet(4);
-        elseif mu(j) < 0.8 && mu(j) >= 0.6   % Blend 2
+        elseif mu(j) < 0.408 && mu(j) >= 0.344   
             Airfoil = AirfoilSet(5);
-        else                                 % NACA 643
+        elseif mu(j) < 0.535 && mu(j) >= 0.408   
             Airfoil = AirfoilSet(6);
+        elseif mu(j) < 0.662 && mu(j) >= 0.535   
+            Airfoil = AirfoilSet(7);
+        else                                 
+            Airfoil = AirfoilSet(8);
         end
         UR = U0*(1-a(i,j)); % Obtain axial velocity at rotor
         UTang = omega*r*(1+aprime(i,j)); % Obtain rotor-induced velocity
@@ -117,7 +103,7 @@ for j = 1:length(mu)
 
         phi(i,j) = atand(UR/UTang); % Inflow angle
         alpha(i,j) = phi(i,j) - Twist(j) - Pitch; % AoA
-        
+
         [Cl,Cd] = interpolate_polars(Airfoil,alpha(i,j)); % Interpolation to find polars
         Cx = Cl*cosd(phi(i,j)) + Cd*sind(phi(i,j));
         Cy = Cl*sind(phi(i,j)) - Cd*cosd(phi(i,j));
@@ -158,14 +144,14 @@ for j = 1:length(mu)
 end
 
 %% Values needed for structural integration
-    FAxial = FAxialSpan(1,:).*dr; 
-    FTang = FTangSpan(1,:).*dr;
+    FAxial_NREL = FAxialSpan(1,:).*dr; 
+    FTang_NREL = FTangSpan(1,:).*dr;
 
 figure
 hold on
 plot(mu,FAxialSpan,"DisplayName","Axial Force")
 plot(mu,FTangSpan,"DisplayName","Tangential Force")
-title("Force in each blade section along span, BulgAir")
+title("Force in each blade section along span, NREL")
 xlabel("Spanwise point \mu")
 ylabel("Force per unit span [N/m]")
 legend

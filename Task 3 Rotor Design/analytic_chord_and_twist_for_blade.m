@@ -3,14 +3,18 @@ function [Blade] = analytic_chord_and_twist_for_blade(Blade,Airfoil,lambda)
 cl = zeros(size(Blade.Radius));
 alpha_rad = zeros(size(Blade.Radius));
 
+% figure; hold on;
+
 % Loop through the airfoils in this blade.
 for i = 1:length(Blade.IFoil)
     i_airfoil = Blade.IFoil(i);
+    airfoil_name = Airfoil.Name{i_airfoil};
     alpha_array = Airfoil.Alpha{i_airfoil};
     Cl_array = Airfoil.Cl{i_airfoil};
     Cd_array = Airfoil.Cd{i_airfoil};
     l_over_d_array = Cl_array ./ Cd_array;
-    [~, l_over_d_max_index] = max(l_over_d_array);
+    [l_over_d_max, l_over_d_max_index] = max(l_over_d_array);
+    % disp(l_over_d_max);
 
     cl_opt = Cl_array(l_over_d_max_index);
     alpha_opt = deg2rad(alpha_array(l_over_d_max_index));
@@ -25,11 +29,14 @@ for i = 1:length(Blade.IFoil)
     % airfoil.
     cl(Blade.NFoil == i_airfoil) = cl_opt;
     alpha_rad(Blade.NFoil == i_airfoil) = alpha_opt;
+
+    % plot(alpha_array, Cl_array, 'DisplayName', airfoil_name);
 end
+legend
 
 [twist_rad, chord] = calc_ideal_chord_and_twist(lambda, alpha_rad, cl, Blade.Radius);
-Blade.Chord = chord;
-Blade.Twist = rad2deg(twist_rad);
+Blade.Chord = chord';
+Blade.Twist = rad2deg(twist_rad');
 end
 
 
@@ -50,8 +57,7 @@ R = r(end);
 % Method from System design and scaling powerpoint, slide 10:
 % Calculate ideal twist distribution.
 twist = (2/3) ./ (lambda * r/R) - alpha;
-twist = twist - twist(end);  % Convention that twist at the tip is 0.
-% twist = rad2deg(twist);
+% twist = twist - twist(end);  % Convention that twist at the tip is 0.
 
 % Calculate chord distribution.
 chord_over_R = (16/9) * pi ./ (B * cl * lambda^2) .* (r/R).^(-1);
