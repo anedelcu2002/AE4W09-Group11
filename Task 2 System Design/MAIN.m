@@ -141,9 +141,9 @@ xlabel('Diameter [m]');
 ylabel('LPC [1/J]');
 axis tight
 
-figure;
-plot(D_array, CF_array);
-title('CF-diameter plot');
-xlabel('Diameter [m]');
-ylabel('Capacity factor');
-axis tight
+%figure;
+%plot(D_array, CF_array);
+%title('CF-diameter plot');
+%xlabel('Diameter [m]');
+%ylabel('Capacity factor');
+%axis tight
