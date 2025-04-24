@@ -14,9 +14,9 @@ function BulgAir = steady_state_control_design(BulgAir,pitch,Cp_max,lambda)
 %     Slewrate: Don't know in Nm/s
 %     OptGain: Kw^2 gain in Nm/(rad/s)^2
 %     SpeedA: startup generator speed in rpm (for cut-in)
-%     SpeedB: start of region 2 in rpm
-%     SpeedB2: end of region 2 in rpm
-%     SpeedC: rated speed in rpm
+%     SpeedB: start of region 2 in generator rpm
+%     SpeedB2: end of region 2 in generator rpm
+%     SpeedC: rated speed in generator rpm
 %     Min: Don't know in Nm
 %     LowPassCutOffFreq: Don't know in rad/s
 
@@ -26,71 +26,37 @@ BulgAir.Control.WindSpeed.Cutout = 25;
 
 BulgAir.Control.Pitch.Fine = pitch;
 
-% Let's start over.
 
 % Generator power goal.
 Pg_W = 3.5e6;
-
 
 % Optimal gain.
 G = BulgAir.Drivetrain.Gearbox.Ratio;
 rho_kgpm3 = BulgAir.AirDensity;
 R_m = BulgAir.Blade.Radius(end);
 drivetrain_efficiency = BulgAir.Drivetrain.Generator.Efficiency * BulgAir.Drivetrain.Gearbox.Efficiency;
-
 K = rho_kgpm3 * pi * R_m^5 * Cp_max * drivetrain_efficiency / (2 * G^3 * lambda^3);
+
 % generator_torque = K * generator_speed^2.
-% generator_power =  K * generator_speed^3.
-omega_g_radps = (Pg_W / K)^(1/3);
-T_g_Nm = Pg_W / omega_g_radps;
-omega_r_radps = omega_g_radps / G;
-omega_r_rpm = omega_r_radps * 60 / (2*pi);
-SpeedC = omega_r_rpm;
+% generator_power =  K * generator_speed^3 * generator_efficiency.
+omega_g_radps = (Pg_W / K / BulgAir.Drivetrain.Generator.Efficiency)^(1/3);
+T_g_Nm = Pg_W / omega_g_radps / BulgAir.Drivetrain.Generator.Efficiency;
+omega_g_rpm = omega_g_radps * 60 / (2*pi);
+SpeedC = omega_g_rpm;
 
 omega_r_cutin_radps = lambda * BulgAir.Control.WindSpeed.Cutin / R_m;
 omega_r_cutin_rpm = omega_r_cutin_radps * 60 / (2*pi);
-SpeedB = omega_r_cutin_rpm;
-
-
-% %% OLD.
-% % The torque control parameters take a bit of calculation.
-% Pr_W = 3.5e6;
-% drivetrain_efficiency = BulgAir.Drivetrain.Generator.Efficiency * BulgAir.Drivetrain.Gearbox.Efficiency;
-% Pg_W = 3.5e6 / drivetrain_efficiency;
-% rho_kgpm3 = BulgAir.AirDensity;
-% R_m = BulgAir.Blade.Radius(end);
-% A_m2 = pi * R_m^2;
-% Ur_mps = (Pg_W / (0.5 * rho_kgpm3 * A_m2 * Cp_max))^(1/3);
-% 
-% % lambda = omega_r_radps * R / Ur_mps, so:
-% omega_r_radps = lambda * Ur_mps / R_m;
-% omega_r_rpm = omega_r_radps * 60 / (2*pi);
-% SpeedC = omega_r_rpm;
-% omega_r_cutin_radps = lambda * BulgAir.Control.WindSpeed.Cutin / R_m;
-% omega_r_cutin_rpm = omega_r_cutin_radps * 60 / (2*pi);
-% SpeedB = omega_r_cutin_rpm;
-% 
-% % Optimal gain.
-% G = BulgAir.Drivetrain.Gearbox.Ratio;
-% K = rho_kgpm3 * pi * R_m^5 * Cp_max * drivetrain_efficiency / (2 * G^3 * lambda^3);
-% T_r_Nm = K * omega_r_radps^2;
-% fprintf('Rated power goal %g and actual %g.\n', Pr_W, T_r_Nm * omega_r_radps * drivetrain_efficiency)
-% 
-% % power = torque * generator_speed * drivetrain_efficiency
-% % power = K * generator_speed^3 * drivetrain_efficiency
-% omega_g_radps = (Pr_W / K / drivetrain_efficiency)^(1/3);
-% omega_r_radps = omega_g_radps / G;
-% fprintf('Rated power goal %g and actual %g.\n', Pg_W, T_r_Nm * omega_r_radps)
-
+omega_g_cutin_rpm = omega_r_cutin_rpm * G;
+SpeedB = omega_g_cutin_rpm;
 
 
 % For now, I assume no torque limit, so we don't have a region 2.5.
-Limit = Inf;
-SpeedB2 = SpeedC*0.98;
+Limit = T_g_Nm * 1.25;
+SpeedB2 = SpeedC*0.95;
 
 % Also assume no region 1.5.
-SpeedA = SpeedB*0.5;
-Min = 0;
+SpeedA = SpeedB*0.75;
+Min = 200;
 
 % Assign them to the Control.Torque struct.
 BulgAir.Control.Torque.Demanded = T_g_Nm;

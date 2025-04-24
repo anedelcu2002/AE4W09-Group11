@@ -28,7 +28,7 @@ clearvars row col Cp_max_index
 
 %% Design input from previous tasks.
 BulgAir.Drivetrain.Generator.Efficiency = 0.975;
-BulgAir.Drivetrain.Gearbox.Ratio = 0.95;
+BulgAir.Drivetrain.Gearbox.Ratio = 100;
 BulgAir.Drivetrain.Gearbox.Efficiency = 0.95;
 
 
