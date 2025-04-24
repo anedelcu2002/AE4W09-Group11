@@ -135,3 +135,20 @@ BulgAir.Blade.Chord = chord;
 BulgAir.Airfoil.Name = cellfun(@(x) char(x), BulgAir.Airfoil.Name, 'UniformOutput', false);
 
 save("BulgAirChordTwist.mat", "-struct", "BulgAir")
+
+
+%% Do the rotor analysis with these parameters.
+clearvars;
+
+%% FASTTool analysis.
+% Now load BulgAirChordTwist in the FASTTool and run 'Steady operating
+% curves' for different pitch angles but not for different wind speeds
+% (because we're only interested in the below-rated response, so the
+% Cp-lambda curve).
+% Let's save those results
+save("BulgAir_CpLambdaPitch.mat")
+
+
+%% Now make the plot for the rotor analysis.
+% We just need to add the NREL 5 MW design to it.
+% I hacked this a bit in the command window to produce 'cP-lamda-pitch'.
