@@ -7,6 +7,7 @@ close all; clearvars; clc;
 
 % Let's load our current design (just the rotor)
 BulgAir = load("BulgAirChordTwist.mat");
+NREL5MW = load("../FastTool/NREL5MW.mat");
 
 % Now load BulgAirChordTwist in the FASTTool and run 'Steady operating
 % curves' for different pitch angles but not for different wind speeds
@@ -31,10 +32,14 @@ BulgAir.Drivetrain.Generator.Efficiency = 0.975;
 BulgAir.Drivetrain.Gearbox.Ratio = 100;
 BulgAir.Drivetrain.Gearbox.Efficiency = 0.95;
 
+% TODO: Blade stiffness.
+
 
 
 %% Now we need to define some control parameters
-BulgAir = steady_state_control_design(BulgAir,pitch,Cp_max,lambda);
+BulgAir = steady_state_control_design(BulgAir,NREL5MW,pitch,Cp_max,lambda);
+exportgraphics(gcf, 'generator_torque_curve.pdf')
+
 
 
 %% Add the tower design.
@@ -43,3 +48,19 @@ BulgAir = steady_state_control_design(BulgAir,pitch,Cp_max,lambda);
 
 %% Save the turbine.
 save("BulgAirComplete.mat", "-struct", "BulgAir")
+
+
+%% Run the steady-state analysis on the FAST tool.
+%....
+
+%% Now make a plot
+close all; clearvars; clc;
+load('BulgAirComplete_steady_state_results.mat')
+
+figure; hold on; grid on;
+plot(WindSpeed, ElectricalPower./1e6)
+
+ylabel('Electrical power (MW)')
+xlabel('Wind speed (m/s)')
+
+exportgraphics(gcf, 'power_curve.pdf')
