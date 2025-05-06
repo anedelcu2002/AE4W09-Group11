@@ -6,7 +6,7 @@ close all; clearvars; clc;
 % control design) and the tower design.
 
 % Let's load our current design (just the rotor)
-BulgAir = load("BulgAirChordTwist.mat");
+BulgAir = load("../Task 3 Rotor Design/BulgAirChordTwist.mat");
 NREL5MW = load("../FastTool/NREL5MW.mat");
 
 % Now load BulgAirChordTwist in the FASTTool and run 'Steady operating
