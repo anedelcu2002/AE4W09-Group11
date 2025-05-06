@@ -31,6 +31,8 @@ clearvars row col Cp_max_index
 BulgAir.Drivetrain.Generator.Efficiency = 0.975;
 BulgAir.Drivetrain.Gearbox.Ratio = 100;
 BulgAir.Drivetrain.Gearbox.Efficiency = 0.95;
+BulgAir.Drivetrain.Generator.HSSInertia = 683;
+BulgAir.Nacelle.Hub.Overhang = 5.675;
 
 % TODO: Blade stiffness.
 
