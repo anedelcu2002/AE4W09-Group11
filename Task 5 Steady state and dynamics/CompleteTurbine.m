@@ -43,7 +43,9 @@ exportgraphics(gcf, 'generator_torque_curve.pdf')
 
 
 %% Add the tower design.
-%TODO
+BulgAir.Tower.Height = linspace(0, 120, 11);
+BulgAir.Tower.Diameter = -0.02185*BulgAir.Tower.Height + 7.012;
+BulgAir.Tower.WallThickness = -0.000104167*BulgAir.Tower.Height + 0.0409;
 
 
 %% Save the turbine.
