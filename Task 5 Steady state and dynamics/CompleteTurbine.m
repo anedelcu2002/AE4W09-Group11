@@ -35,7 +35,7 @@ BulgAir.Drivetrain.Generator.HSSInertia = 683;
 BulgAir.Nacelle.Hub.Overhang = 5.675;
 
 % TODO: Blade stiffness.
-
+% Should be good since Alex added it in Task 3
 
 
 %% Now we need to define some control parameters
@@ -48,6 +48,7 @@ exportgraphics(gcf, 'generator_torque_curve.pdf')
 BulgAir.Tower.Height = linspace(0, 120, 11);
 BulgAir.Tower.Diameter = -0.02185*BulgAir.Tower.Height + 7.012;
 BulgAir.Tower.WallThickness = -0.000104167*BulgAir.Tower.Height + 0.0409;
+BulgAir.Tower.HubHeight = BulgAir.Tower.Height(end);
 
 
 %% Save the turbine.
@@ -55,7 +56,8 @@ save("BulgAirComplete.mat", "-struct", "BulgAir")
 
 
 %% Run the steady-state analysis on the FAST tool.
-%....
+addpath('..\FASTTool\subfunctions');
+% ModalAnalysis(BulgAir) TODO
 
 %% Now make a plot
 close all; clearvars; clc;
