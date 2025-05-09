@@ -196,5 +196,14 @@ for i=1:48
         airfoil_thickness_array(i)=0.18;
     end
 end
+
 BulgAir.Blade.Thickness=airfoil_thickness_array.*Chord;
+
+%% Smoothing of thickness between cylinder and airfoil
+indx1 = 8;
+indx2 = 15;
+
+BulgAir.Blade.Thickness(indx1:indx2) = interp1([indx1 indx2],...
+    [BulgAir.Blade.Thickness(indx1) BulgAir.Blade.Thickness(indx2)],[indx1:indx2]);
+
 save("BulgAirChordTwist.mat", "-struct", "BulgAir")

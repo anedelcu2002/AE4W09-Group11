@@ -35,7 +35,7 @@ BulgAir.Drivetrain.Generator.HSSInertia = 683;
 BulgAir.Nacelle.Hub.Overhang = 5.675;
 
 % TODO: Blade stiffness.
-% Should be good since Alex added it in Task 3
+% Should be good to go since Alex added it in Task 3
 
 
 %% Now we need to define some control parameters
