@@ -1,8 +1,8 @@
 %% to-do:
-% figure out e-modulus
-% check whether to use ip/oop or edge/flap moments
+% calculate e-modulus based on literature
 % calculate damage equivalent load for fatigue
-% check whether to use independent or superimposed loads for fatigue
+% switch stress calculation to geometric vector addition, variable max stress point, distance to neutral axis is distance on circle!!
+% justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
 % check whether to use moments or stresses for fatigue
 
 function cumulativeDamageStemPlot(ni,Nfi) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
