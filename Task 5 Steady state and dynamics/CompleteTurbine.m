@@ -56,7 +56,7 @@ save("BulgAirComplete.mat", "-struct", "BulgAir")
 
 
 %% Run the steady-state analysis on the FAST tool.
-addpath('..\FASTTool\subfunctions');
+% addpath('..\FASTTool\subfunctions');
 % ModalAnalysis(BulgAir) TODO
 
 %% Now make a plot

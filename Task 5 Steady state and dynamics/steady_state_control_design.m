@@ -20,7 +20,7 @@ function BulgAir = steady_state_control_design(BulgAir,NREL5MW,pitch,Cp_max,lamb
 %     Min: Don't know in Nm
 %     LowPassCutOffFreq: Don't know in rad/s
 
-BulgAir.Control.WindSpeed.Cutin = 2;
+BulgAir.Control.WindSpeed.Cutin = 3;
 BulgAir.Control.WindSpeed.Cutout = 25;
 
 BulgAir.Control.Pitch.Fine = pitch;
@@ -66,12 +66,22 @@ SpeedB2 = 0.99*SpeedC;
 
 
 % SpeedA is the cut-in speed.
-omega_r_cutin_radps = lambda * BulgAir.Control.WindSpeed.Cutin / R_m;
-omega_g_cutin_rpm = radps2rpm(omega_r_cutin_radps) * G;
-SpeedA = omega_g_cutin_rpm;
+% omega_r_cutin_radps = lambda * BulgAir.Control.WindSpeed.Cutin / R_m;
+% omega_g_cutin_rpm = radps2rpm(omega_r_cutin_radps) * G;
+% SpeedA = omega_g_cutin_rpm;
+% We had some issues with the tower resonance overlapping with the 3P
+% frequency. So we have a minimum generator speed to avoid that.
+SpeedA = 428;
 
-% SpeedB is then define with the ratio of A-B of the NREL5MW turbine.
-SpeedB = SpeedA * NREL5MW.Control.Torque.SpeedB / NREL5MW.Control.Torque.SpeedA;
+% SpeedB is then defined with the ratio of A-B of the NREL5MW turbine.
+% SpeedB = SpeedA * NREL5MW.Control.Torque.SpeedB / NREL5MW.Control.Torque.SpeedA;
+% SpeedB is defined with the slope of A-B of the NREL5MW turbine.
+% torqueSpeedB = K * SpeedB^2
+% torqueSpeedB = (SpeedB - SpeedA) * slope
+% K* SpeedB^2 - slope * SpeedB + slope * SpeedA = 0
+slope = NREL5MW.Control.Torque.OptGain * NREL5MW.Control.Torque.SpeedB^2 / (NREL5MW.Control.Torque.SpeedB - NREL5MW.Control.Torque.SpeedA);
+SpeedB = roots([K, -slope, slope*SpeedA]);
+SpeedB = SpeedB(2);
 
 % I don't know what to do with the minimum torque. Let's scale it with the
 % turbine size.
