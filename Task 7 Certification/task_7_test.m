@@ -4,6 +4,7 @@
 % switch stress calculation to geometric vector addition, variable max stress point, distance to neutral axis is distance on circle!!
 % justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
 % check whether to use moments or stresses for fatigue
+% add safety factors for deflection
 
 function cumulativeDamageStemPlot(ni,Nfi) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
 figure
