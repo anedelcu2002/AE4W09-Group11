@@ -1,28 +1,26 @@
 %% to-do:
 % calculate e-modulus based on literature
 % calculate damage equivalent load for fatigue
-% switch stress calculation to geometric vector addition, variable max stress point, distance to neutral axis is distance on circle!!
 % justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
-% check whether to use moments or stresses for fatigue
-% add safety factors for deflection
+% check whether to use moments or stresses for fatigue; brightspace gives UCS in kNm
 
-function cumulativeDamageStemPlot(ni,Nfi) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
-figure
-L = length(ni);
-damage = sum(ni./Nfi);
-stem(0,NaN,"Color",[0 1 0])
-title("Cumulative Damage from Palmgren-Miner Rule")
-xlabel("Cycle $i$","Interpreter","latex")
-ylabel("Cum. damage $D_{i} = \sum_{j=1}^{i}n_{j}/N_{f,j}$","Interpreter","latex")
-set(gca,"XLim",[0 L],"YLim",[0 damage])
-grid("on")
-iter = unique([1:round(L/100):L,L]);
-hold(gca,"on")
-for i = iter
-    cdi = sum(ni(1:i)./Nfi(1:i)); % cumulative damge upto cycle i
-    plt = stem(i,cdi,"filled");
-    setStemColor(plt,cdi,0.95)
-end
+function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
+    figure
+    L = length(ni);
+    damage = sum(ni./Nfi);
+    stem(0,NaN,"Color",[0 1 0])
+    title(["Cumulative Damage from Palmgren-Miner Rule, blade ", blade_nr])
+    xlabel("Cycle $i$","Interpreter","latex")
+    ylabel("Cum. damage $D_{i} = \sum_{j=1}^{i}n_{j}/N_{f,j}$","Interpreter","latex")
+    set(gca,"XLim",[0 L],"YLim",[0 damage])
+    grid("on")
+    iter = unique([1:round(L/100):L,L]);
+    hold(gca,"on")
+    for i = iter
+        cdi = sum(ni(1:i)./Nfi(1:i)); % cumulative damge upto cycle i
+        plt = stem(i,cdi,"filled");
+        setStemColor(plt,cdi,0.95)
+    end
 end
 
 function setStemColor(hplt,cumulativeDamage,gamma)
@@ -46,6 +44,44 @@ end
 hplt.Color = color;
 end
 
+function stress=calculate_stress(moment_1, moment_2, thickness, EI_1, EI_2, E)
+    moment_sum=(moment_1.^2.+moment_2.^2).^0.5;
+    distance_1=thickness.*(moment_1./moment_sum);
+    distance_2=thickness.*(moment_2./moment_sum);
+    stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
+end
+
+function D = rainflow_counting(stress_timeseries, blade_nr) % stolen from brightspace
+    gam_m=1; % safety factor for material properties
+    gam_f=1.2; % safety factor for loads
+    gam_n=1.15; % safety factor for severity of effect
+
+    S_s= gam_m.*gam_f.*gam_n.*stress_timeseries;
+
+    % Perform rainflow count, blade 1
+    [c,hist,edges,rmm,idx] = rainflow(S_s);
+
+    % Plot histogram
+    figure;
+    histogram('BinEdges',edges','BinCounts',sum(hist,2))
+    title(['Rainflow counting, blade', blade_nr ])
+    xlabel('Stress Range')
+    ylabel('Cycle Counts')
+
+    % Set S-N curve and use Minor's rule to determine damage
+    %   by summing damages from each individual cycle or half cycle
+    m=9; % slope S-N curve N*S^m=K (with S stress range)
+    UCS=600*10^6; % ultimate compression strength (Nm2);
+    K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
+
+    range= c(:,2);
+    count= c(:,1);
+    D=1/K*sum(count.*(range.^m));
+
+    cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
+end
+
+
 %% initialize data
 response_data=load('nrel_cert.mat');
 response_data.Legend;
@@ -55,7 +91,7 @@ turbine_data=load('NREL5MW.mat');
 E=4.7*10^9;
 EI_edge=turbine_data.Blade.EIedge(1);
 EI_flap=turbine_data.Blade.EIflap(1);
-thickness=turbine_data.Blade.Thickness(1)/sqrt(2); %base root is a cylinder, assuming spar structure is square enclosed in circle
+thickness=turbine_data.Blade.Thickness(1); %base root is a load-bearing cylinder
 
 %% perform post-processing
 analysis=0; % 1 for extreme load, 0 for fatigue
@@ -96,16 +132,32 @@ if analysis==1
     xlabel('time (s)')
 
     maximum_deflection=max([max(response_data.OoPDefl1), max(response_data.OoPDefl2), max(response_data.OoPDefl3)]); %maximum out of plane tip deflection in meters
+    sf_m_defl=1.1; % safety factor for material properties
+    sf_f_defl=1.35; % safety factor for loads
+    sf_n_defl=1; % safety factor for severity of effect
+    maximum_deflection=maximum_deflection*sf_m_defl*sf_f_defl*sf_n_defl % maximum deflection in meters
 
-    root_stress1=(response_data.RootMFlp1*1000*thickness/2/EI_flap+response_data.RootMEdg1*1000*thickness/2/EI_edge)*E; %blade 1 root stress timeseries
-    root_stress2=(response_data.RootMFlp2*1000*thickness/2/EI_flap+response_data.RootMEdg2*1000*thickness/2/EI_edge)*E; 
-    root_stress3=(response_data.RootMFlp3*1000*thickness/2/EI_flap+response_data.RootMEdg3*1000*thickness/2/EI_edge)*E;
+    root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
+    root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
+    root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
+
+    figure;
+    plot(response_data.Time, root_stress1);
+    hold on;
+    plot(response_data.Time, root_stress2);
+    hold on;
+    plot(response_data.Time, root_stress3);
+    legend('blade 1', 'blade 2', 'blade 3');
+    title('blade root stress amplitude')
+    ylabel('stress (N/m2)')
+    xlabel('time (s)')
 
     gam_m=1.35; % safety factor for material properties
     gam_f=1.3; % safety factor for loads
     gam_n=1; % safety factor for severity of effect
-    maximum_stress=gam_m*gam_f*gam_n*max([max(root_stress1), max(root_stress2), max(root_stress3)]); %maximum blade root stress
-    maximum_stress_mpa=maximum_stress/10^6
+
+    maximum_stress=gam_m*gam_f*gam_n*max([max(root_stress1), max(root_stress2), max(root_stress3)]); %maximum blade root stress after safety factors
+    maximum_stress_mpa=maximum_stress/10^6 % maximum stress in MPa
 
 elseif analysis==0
 
@@ -139,10 +191,10 @@ elseif analysis==0
     ylabel('moment (kN m)')
     xlabel('time (s)')
 
-    root_stress1=(response_data.RootMFlp1*1000*thickness/2/EI_flap+response_data.RootMEdg1*1000*thickness/2/EI_edge)*E; %blade 1 root stress timeseries
-    root_stress2=(response_data.RootMFlp2*1000*thickness/2/EI_flap+response_data.RootMEdg2*1000*thickness/2/EI_edge)*E; 
-    root_stress3=(response_data.RootMFlp3*1000*thickness/2/EI_flap+response_data.RootMEdg3*1000*thickness/2/EI_edge)*E;
-    
+    root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
+    root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
+    root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
+
     figure;
     plot(response_data.Time, root_stress1);
     hold on;
@@ -154,65 +206,9 @@ elseif analysis==0
     ylabel('stress (N/m2)')
     xlabel('time (s)')
 
-    %% rainflow counting (from brightspace)
-    gam_m=1; % safety factor for material properties
-    gam_f=1.2; % safety factor for loads
-    gam_n=1.15; % safety factor for severity of effect
-    S_s1 = gam_m*gam_f*gam_n*root_stress1;
-    S_s2 = gam_m*gam_f*gam_n*root_stress2;
-    S_s3 = gam_m*gam_f*gam_n*root_stress3;
-
-    % Perform rainflow count, blade 1
-    [c1,hist1,edges1,rmm1,idx1] = rainflow(S_s1);
-
-    % Plot histogram
-    figure;
-    histogram('BinEdges',edges1','BinCounts',sum(hist1,2))
-    title('Blade 1 rainflow counting')
-    xlabel('Stress Range')
-    ylabel('Cycle Counts')
-
-    % Set S-N curve and use Minor's rule to determine damage
-    %   by summing damages from each individual cycle or half cycle
-    m=9; % slope S-N curve N*S^m=K (with S stress range)
-    UCS=600*10^6; % ultimate compression strength (Nm2);
-    K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
-
-    range= c1(:,2);
-    count= c1(:,1);
-    D1=1/K*sum(count.*(range.^m));
-
-    cumulativeDamageStemPlot(count,K./(range.^m));
-
-    % Perform rainflow count, blade 2
-    [c2,hist2,edges2,rmm2,idx2] = rainflow(S_s2);
-
-    figure;
-    histogram('BinEdges',edges2','BinCounts',sum(hist2,2))
-    title('Blade 2 rainflow counting')
-    xlabel('Stress Range')
-    ylabel('Cycle Counts')
-
-    range= c2(:,2);
-    count= c2(:,1);
-    D2=1/K*sum(count.*(range.^m));
-
-    cumulativeDamageStemPlot(count,K./(range.^m));
-
-    % Perform rainflow count, blade 3
-    [c3,hist3,edges3,rmm3,idx3] = rainflow(S_s3);
-
-    figure;
-    histogram('BinEdges',edges3','BinCounts',sum(hist3,2))
-    title('Blade 3 rainflow counting')
-    xlabel('Stress Range')
-    ylabel('Cycle Counts')
-
-    range= c3(:,2);
-    count= c3(:,1);
-    D3=1/K*sum(count.*(range.^m));
-
-    cumulativeDamageStemPlot(count,K./(range.^m));
+    D1 = rainflow_counting(root_stress1, 1);
+    D2 = rainflow_counting(root_stress2, 2);
+    D3 = rainflow_counting(root_stress3, 3);
 end
 
 
