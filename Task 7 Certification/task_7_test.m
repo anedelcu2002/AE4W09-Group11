@@ -5,7 +5,8 @@
 % document all work done so far - alex
 
 % calculate damage equivalent load for fatigue - jesse
-% check simulation duration for fatigue - jesse
+% check simulation duration for fatigue - jesse -> 60 minutes without
+% transients per wind speed (page 50)
 
 
 % plot some nice spectra - victor
@@ -60,7 +61,7 @@ function stress=calculate_stress(moment_1, moment_2, thickness, EI_1, EI_2, E)
     stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
 end
 
-function D = rainflow_counting(stress_timeseries, blade_nr, plot_b) % stolen from brightspace
+function [D, DEL] = rainflow_counting(stress_timeseries, blade_nr, plot_b) % stolen from brightspace
     gam_m=1; % safety factor for material properties
     gam_f=1.2; % safety factor for loads
     gam_n=1.15; % safety factor for severity of effect
@@ -88,9 +89,15 @@ function D = rainflow_counting(stress_timeseries, blade_nr, plot_b) % stolen fro
     range= c(:,2);
     count= c(:,1);
     D=1/K*sum(count.*(range.^m));
+    
     if plot_b
         cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
     end
+
+    % Also calculate the damage equivalent load.
+    Dt = 0.008;
+    neq = length(S_s) / Dt;  % assume 1h of data.
+    DEL = (sum(count .* (range.^m)) / neq).^(1/m);
 end
 
 
@@ -196,12 +203,12 @@ elseif analysis==0
         xlabel('time (s)')
     end
 
-    D1 = rainflow_counting(root_stress1, 1, plot_b);
-    D2 = rainflow_counting(root_stress2, 2, plot_b);
-    D3 = rainflow_counting(root_stress3, 3, plot_b);
-    disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1)])
-    disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2)])
-    disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3)])
+    [D1, DEL1] = rainflow_counting(root_stress1, 1, plot_b);
+    [D2, DEL2] = rainflow_counting(root_stress2, 2, plot_b);
+    [D3, DEL3] = rainflow_counting(root_stress3, 3, plot_b);
+    disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1), ', with DEL ', num2str(DEL1)])
+    disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2), ', with DEL ', num2str(DEL2)])
+    disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3), ', with DEL ', num2str(DEL3)])
 
 end
 
