@@ -19,7 +19,7 @@ function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mat
     L = length(ni);
     damage = sum(ni./Nfi);
     stem(0,NaN,"Color",[0 1 0])
-    title(["Cumulative Damage from Palmgren-Miner Rule, blade ", blade_nr])
+    title(["Cumulative Damage from Palmgren-Miner Rule, blade ", num2str(blade_nr)])
     xlabel("Cycle $i$","Interpreter","latex")
     ylabel("Cum. damage $D_{i} = \sum_{j=1}^{i}n_{j}/N_{f,j}$","Interpreter","latex")
     set(gca,"XLim",[0 L],"YLim",[0 damage])
@@ -75,7 +75,7 @@ function [D, DEL] = rainflow_counting(stress_timeseries, blade_nr, plot_b) % sto
     if plot_b
         figure;
         histogram('BinEdges',edges','BinCounts',sum(hist,2))
-        title(['Rainflow counting, blade', blade_nr ])
+        title(['Rainflow counting, blade ', num2str(blade_nr)])
         xlabel('Stress Range')
         ylabel('Cycle Counts')
     end
@@ -123,7 +123,7 @@ if plot_b
     hold on;
     plot(response_data.Time, response_data.OoPDefl3);
     legend('blade 1', 'blade 2', 'blade 3');
-    title('out of plane tip deflection')
+    title('Out of plane tip deflection')
     ylabel('deflection (m)')
     xlabel('time (s)')
 
@@ -134,7 +134,7 @@ if plot_b
     hold on;
     plot(response_data.Time, response_data.RootMEdg3);
     legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root moment edge direction')
+    title('Blade root moment, edge direction')
     ylabel('moment (kN m)')
     xlabel('time (s)')
 
@@ -145,7 +145,7 @@ if plot_b
     hold on;
     plot(response_data.Time, response_data.RootMFlp3);
     legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root moment flap direction')
+    title('Blade root moment, flap direction')
     ylabel('moment (kN m)')
     xlabel('time (s)')
 end
@@ -173,7 +173,7 @@ if analysis==1
         hold on;
         plot(response_data.Time, root_stress3);
         legend('blade 1', 'blade 2', 'blade 3');
-        title('blade root stress amplitude')
+        title('Blade root stress amplitude')
         ylabel('stress (N/m2)')
         xlabel('time (s)')
     end
@@ -198,7 +198,7 @@ elseif analysis==0
         hold on;
         plot(response_data.Time, root_stress3);
         legend('blade 1', 'blade 2', 'blade 3');
-        title('blade root stress amplitude')
+        title('Blade root stress amplitude')
         ylabel('stress (N/m2)')
         xlabel('time (s)')
     end
