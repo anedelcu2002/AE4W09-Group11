@@ -1,6 +1,8 @@
 %% to-do:
 % calculate e-modulus based on literature
 % calculate damage equivalent load for fatigue
+% check simulation duration for fatigue
+% determine wind speeds for each simulation
 % justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
 % check whether to use moments or stresses for fatigue; brightspace gives UCS in kNm
 % plot some nice spectra
@@ -53,7 +55,7 @@ function stress=calculate_stress(moment_1, moment_2, thickness, EI_1, EI_2, E)
     stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
 end
 
-function D = rainflow_counting(stress_timeseries, blade_nr, plot) % stolen from brightspace
+function D = rainflow_counting(stress_timeseries, blade_nr, plot_b) % stolen from brightspace
     gam_m=1; % safety factor for material properties
     gam_f=1.2; % safety factor for loads
     gam_n=1.15; % safety factor for severity of effect
@@ -64,7 +66,7 @@ function D = rainflow_counting(stress_timeseries, blade_nr, plot) % stolen from 
     [c,hist,edges,rmm,idx] = rainflow(S_s);
 
     % Plot histogram
-    if plot
+    if plot_b
         figure;
         histogram('BinEdges',edges','BinCounts',sum(hist,2))
         title(['Rainflow counting, blade', blade_nr ])
@@ -81,7 +83,7 @@ function D = rainflow_counting(stress_timeseries, blade_nr, plot) % stolen from 
     range= c(:,2);
     count= c(:,1);
     D=1/K*sum(count.*(range.^m));
-    if plot
+    if plot_b
         cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
     end
 end
@@ -99,9 +101,9 @@ EI_flap=turbine_data.Blade.EIflap(1);
 thickness=turbine_data.Blade.Thickness(1); %base root is a load-bearing cylinder
 
 %% plot simulation outputs
-plot=false;
+plot_b=true;
 
-if plot
+if plot_b
     figure;
     plot(response_data.Time, response_data.OoPDefl1);
     hold on;
@@ -137,7 +139,7 @@ if plot
 end
 
 %% perform post-processing
-analysis=1; % 1 for extreme load, 0 for fatigue
+analysis=0; % 1 for extreme load, 0 for fatigue
 
 if analysis==1
     maximum_deflection=max([max(response_data.OoPDefl1), max(response_data.OoPDefl2), max(response_data.OoPDefl3)]); %maximum out of plane tip deflection in meters
@@ -151,7 +153,7 @@ if analysis==1
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
 
-    if plot
+    if plot_b
         figure;
         plot(response_data.Time, root_stress1);
         hold on;
@@ -176,7 +178,7 @@ elseif analysis==0
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
 
-    if plot
+    if plot_b
         figure;
         plot(response_data.Time, root_stress1);
         hold on;
@@ -189,9 +191,9 @@ elseif analysis==0
         xlabel('time (s)')
     end
 
-    D1 = rainflow_counting(root_stress1, 1, plot);
-    D2 = rainflow_counting(root_stress2, 2, plot);
-    D3 = rainflow_counting(root_stress3, 3, plot);
+    D1 = rainflow_counting(root_stress1, 1, plot_b);
+    D2 = rainflow_counting(root_stress2, 2, plot_b);
+    D3 = rainflow_counting(root_stress3, 3, plot_b);
     disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1)])
     disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2)])
     disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3)])
