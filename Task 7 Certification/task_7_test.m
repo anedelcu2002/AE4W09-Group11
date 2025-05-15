@@ -3,6 +3,8 @@
 % calculate damage equivalent load for fatigue
 % justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
 % check whether to use moments or stresses for fatigue; brightspace gives UCS in kNm
+% plot some nice spectra
+% calculate thickness factor
 
 function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
     figure
@@ -51,7 +53,7 @@ function stress=calculate_stress(moment_1, moment_2, thickness, EI_1, EI_2, E)
     stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
 end
 
-function D = rainflow_counting(stress_timeseries, blade_nr) % stolen from brightspace
+function D = rainflow_counting(stress_timeseries, blade_nr, plot) % stolen from brightspace
     gam_m=1; % safety factor for material properties
     gam_f=1.2; % safety factor for loads
     gam_n=1.15; % safety factor for severity of effect
@@ -62,11 +64,13 @@ function D = rainflow_counting(stress_timeseries, blade_nr) % stolen from bright
     [c,hist,edges,rmm,idx] = rainflow(S_s);
 
     % Plot histogram
-    figure;
-    histogram('BinEdges',edges','BinCounts',sum(hist,2))
-    title(['Rainflow counting, blade', blade_nr ])
-    xlabel('Stress Range')
-    ylabel('Cycle Counts')
+    if plot
+        figure;
+        histogram('BinEdges',edges','BinCounts',sum(hist,2))
+        title(['Rainflow counting, blade', blade_nr ])
+        xlabel('Stress Range')
+        ylabel('Cycle Counts')
+    end
 
     % Set S-N curve and use Minor's rule to determine damage
     %   by summing damages from each individual cycle or half cycle
@@ -77,8 +81,9 @@ function D = rainflow_counting(stress_timeseries, blade_nr) % stolen from bright
     range= c(:,2);
     count= c(:,1);
     D=1/K*sum(count.*(range.^m));
-
-    cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
+    if plot
+        cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
+    end
 end
 
 
@@ -93,11 +98,10 @@ EI_edge=turbine_data.Blade.EIedge(1);
 EI_flap=turbine_data.Blade.EIflap(1);
 thickness=turbine_data.Blade.Thickness(1); %base root is a load-bearing cylinder
 
-%% perform post-processing
-analysis=0; % 1 for extreme load, 0 for fatigue
+%% plot simulation outputs
+plot=false;
 
-if analysis==1
-
+if plot
     figure;
     plot(response_data.Time, response_data.OoPDefl1);
     hold on;
@@ -130,85 +134,68 @@ if analysis==1
     title('blade root moment flap direction')
     ylabel('moment (kN m)')
     xlabel('time (s)')
+end
 
+%% perform post-processing
+analysis=1; % 1 for extreme load, 0 for fatigue
+
+if analysis==1
     maximum_deflection=max([max(response_data.OoPDefl1), max(response_data.OoPDefl2), max(response_data.OoPDefl3)]); %maximum out of plane tip deflection in meters
     sf_m_defl=1.1; % safety factor for material properties
     sf_f_defl=1.35; % safety factor for loads
     sf_n_defl=1; % safety factor for severity of effect
-    maximum_deflection=maximum_deflection*sf_m_defl*sf_f_defl*sf_n_defl % maximum deflection in meters
+    maximum_deflection=maximum_deflection*sf_m_defl*sf_f_defl*sf_n_defl; % maximum deflection in meters
+    disp(['Maximum tip deflection in out-of-plane direction is ', num2str(maximum_deflection), ' meters'])
 
     root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
 
-    figure;
-    plot(response_data.Time, root_stress1);
-    hold on;
-    plot(response_data.Time, root_stress2);
-    hold on;
-    plot(response_data.Time, root_stress3);
-    legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root stress amplitude')
-    ylabel('stress (N/m2)')
-    xlabel('time (s)')
+    if plot
+        figure;
+        plot(response_data.Time, root_stress1);
+        hold on;
+        plot(response_data.Time, root_stress2);
+        hold on;
+        plot(response_data.Time, root_stress3);
+        legend('blade 1', 'blade 2', 'blade 3');
+        title('blade root stress amplitude')
+        ylabel('stress (N/m2)')
+        xlabel('time (s)')
+    end
 
     gam_m=1.35; % safety factor for material properties
     gam_f=1.3; % safety factor for loads
     gam_n=1; % safety factor for severity of effect
 
     maximum_stress=gam_m*gam_f*gam_n*max([max(root_stress1), max(root_stress2), max(root_stress3)]); %maximum blade root stress after safety factors
-    maximum_stress_mpa=maximum_stress/10^6 % maximum stress in MPa
+    disp(['Maximum blade root stress is ', num2str(maximum_stress/10^6), ' MPa'])
 
 elseif analysis==0
-
-    figure;
-    plot(response_data.Time, response_data.OoPDefl1);
-    hold on;
-    plot(response_data.Time, response_data.OoPDefl2);
-    hold on;
-    plot(response_data.Time, response_data.OoPDefl3);
-    legend('blade 1', 'blade 2', 'blade 3');
-
-    figure;
-    plot(response_data.Time, response_data.RootMEdg1);
-    hold on;
-    plot(response_data.Time, response_data.RootMEdg2);
-    hold on;
-    plot(response_data.Time, response_data.RootMEdg3);
-    legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root moment edge direction')
-    ylabel('moment (kN m)')
-    xlabel('time (s)')
-
-    figure;
-    plot(response_data.Time, response_data.RootMFlp1);
-    hold on;
-    plot(response_data.Time, response_data.RootMFlp2);
-    hold on;
-    plot(response_data.Time, response_data.RootMFlp3);
-    legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root moment flap direction')
-    ylabel('moment (kN m)')
-    xlabel('time (s)')
-
     root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
 
-    figure;
-    plot(response_data.Time, root_stress1);
-    hold on;
-    plot(response_data.Time, root_stress2);
-    hold on;
-    plot(response_data.Time, root_stress3);
-    legend('blade 1', 'blade 2', 'blade 3');
-    title('blade root stress amplitude')
-    ylabel('stress (N/m2)')
-    xlabel('time (s)')
+    if plot
+        figure;
+        plot(response_data.Time, root_stress1);
+        hold on;
+        plot(response_data.Time, root_stress2);
+        hold on;
+        plot(response_data.Time, root_stress3);
+        legend('blade 1', 'blade 2', 'blade 3');
+        title('blade root stress amplitude')
+        ylabel('stress (N/m2)')
+        xlabel('time (s)')
+    end
 
-    D1 = rainflow_counting(root_stress1, 1);
-    D2 = rainflow_counting(root_stress2, 2);
-    D3 = rainflow_counting(root_stress3, 3);
+    D1 = rainflow_counting(root_stress1, 1, plot);
+    D2 = rainflow_counting(root_stress2, 2, plot);
+    D3 = rainflow_counting(root_stress3, 3, plot);
+    disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1)])
+    disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2)])
+    disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3)])
+
 end
 
 
