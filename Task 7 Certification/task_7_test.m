@@ -1,12 +1,17 @@
 %% to-do:
-% calculate e-modulus based on literature
-% calculate damage equivalent load for fatigue
-% check simulation duration for fatigue
-% determine wind speeds for each simulation
-% justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes
-% check whether to use moments or stresses for fatigue; brightspace gives UCS in kNm
-% plot some nice spectra
-% calculate thickness factor
+% calculate e-modulus based on literature - alex
+% determine wind speeds for each simulation - alex
+% justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes - alex
+% document all work done so far - alex
+
+% calculate damage equivalent load for fatigue - jesse
+% check simulation duration for fatigue - jesse
+
+
+% plot some nice spectra - victor
+
+
+% calculate thickness factor and recheck design with task 3, task 5 - victor
 
 function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
     figure
