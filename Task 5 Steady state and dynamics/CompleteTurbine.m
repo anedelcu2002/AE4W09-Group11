@@ -55,7 +55,7 @@ BulgAir.Tower.HubHeight = BulgAir.Tower.Height(end);
 save("BulgAirComplete.mat", "-struct", "BulgAir")
 
 
-%% Run the steady-state analysis on the FAST tool.
+%% Run the steady-state analysis on the FAST tool for all wind speeds.
 % addpath('..\FASTTool\subfunctions');
 % ModalAnalysis(BulgAir) TODO
 
