@@ -146,7 +146,7 @@ clearvars;
 % (because we're only interested in the below-rated response, so the
 % Cp-lambda curve).
 % Let's save those results
-save("BulgAir_CpLambdaPitch.mat")
+% save("BulgAir_CpLambdaPitch.mat")
 
 
 %% Now make the plot for the rotor analysis.

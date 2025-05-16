@@ -65,7 +65,7 @@ rho = 1.225;
 
 %% BEM
 NREL5MW = load("..\FASTTool\NREL5MW.mat");
-BulgAir = load("BulgAir.mat").BulgAir;
+BulgAir = load("BulgAirChordTwist.mat");
 
 r_n = NREL5MW.Blade.Radius / NREL5MW.Blade.Radius(end);
 r_n_bulgAir = BulgAir.Blade.Radius / BulgAir.Blade.Radius(end);
