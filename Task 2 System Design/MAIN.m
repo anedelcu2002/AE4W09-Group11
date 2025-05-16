@@ -147,3 +147,11 @@ axis tight
 %xlabel('Diameter [m]');
 %ylabel('Capacity factor');
 %axis tight
+
+
+%% Get Weibull for new hub height.
+v = (1:50)';
+N = 1e10;
+counts = round(f_curve(2:end) * N);
+parmHat = fitdist(v, 'Weibull', 'Frequency', counts');
+parmHat

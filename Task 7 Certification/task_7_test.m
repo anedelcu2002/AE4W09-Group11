@@ -186,6 +186,7 @@ if analysis==1
     disp(['Maximum blade root stress is ', num2str(maximum_stress/10^6), ' MPa'])
 
 elseif analysis==0
+    % TODO: remove transient part of the simulation
     root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
@@ -210,7 +211,75 @@ elseif analysis==0
     disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2), ', with DEL ', num2str(DEL2)])
     disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3), ', with DEL ', num2str(DEL3)])
 
+    fprintf("Average damage for the three blades is %.4g.\n", mean([D1, D2, D3]))
+
 end
+
+
+%% Lifetime fatigue calculation.
+% Using equation H.3 from the IEC 61400-1.
+function [lifetime_damage, accumulated_damage] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages, wbl_scale, wbl_shape)
+arguments
+    lifetime_s double  % Lifetime of the turbine in seconds.
+    period_s double    % Period over which the damages were calculated
+    windspeeds double  % Wind speeds for which the damages were calculated
+    damages double     % Damage for the wind speed
+    wbl_scale double   % Weibull scale parameter 
+    wbl_shape double   % Weibull shape parameter 
+end
+
+assert(length(damages) == length(windspeeds), "damages (%i) must be calculated for each windspeed (%i).", length(damages), length(windspeeds))
+
+dw = diff(windspeeds);
+assert(std(dw) == 0, "windspeeds must be evenly spaced.")
+dw = dw(1);
+windspeeds_lower_bounds = windspeeds - 0.5 * dw;
+windspeeds_upper_bounds = windspeeds + 0.5 * dw;
+
+windspeeds_probability = wblcdf(windspeeds_upper_bounds, wbl_scale, wbl_shape) - wblcdf(windspeeds_lower_bounds, wbl_scale, wbl_shape);
+
+lifetime_damage = lifetime_s / period_s * sum(damages .* windspeeds_probability);
+accumulated_damage = lifetime_s / period_s * cumsum(damages .* windspeeds_probability);
+
+end
+
+% Inputs to the lifetime damage calculation.
+lifetime_s = seconds(years(20));
+period_s = seconds(minutes(10));
+
+windspeeds = 3:25;
+% Hmm this is not so super nice, it'd be nicer to get the damages of all
+% the simulations automatically.
+damages = [1e-8, 1e-7, 1e-6, ...
+    1e-6, 1e-6, 1e-6, 1e-6, 1e-6, ...
+    1e-6, 1e-6, 1e-6, 1e-6, 1e-6, ...
+    1e-6, 1e-6, 1e-7, 1e-6, 1e-6, ...
+    1e-6, 1e-6, 1e-6, 1e-6, 1e-6];
+    
+% Weibull distribution at hub height (see bottom of MAIN.m in Task 2).
+scale = 8.45387;
+shape = 1.50374;
+
+[lifetime_damage, accumulated_damage] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages, scale, shape);
+fprintf("Lifetime damage is %.3f (should be below 1).\n", lifetime_damage)
+
+%% Make some nice plots.
+% TODO: Look up what plots they want us to put in the report.
+figure;
+yyaxis left
+plot(windspeeds, damages)
+ylim([0, max(damages)*1.2])
+set(gca, 'YScale', 'log')
+ylabel('Damage (-)')
+
+yyaxis right
+all_windspeeds = linspace(0, 30, 1000);
+plot(all_windspeeds, wblpdf(all_windspeeds, scale, shape))
+ylabel('Wind speed probability (-)')
+
+xlabel('Wind speed (m/s)')
+
+% legend("Damage per wind speed", "Wind speed distribution")
 
 
 %M=response_data.RootMFlp1; % blade root flap moment (kNm)
