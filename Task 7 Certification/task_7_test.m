@@ -1,8 +1,5 @@
 %% to-do:
-% calculate e-modulus based on literature - alex
 % determine wind speeds for each simulation - alex
-% justify use of superimposed loads for fatigue, reflect on how it is an improper assessment of amplitudes - alex
-% document all work done so far - alex
 
 % calculate damage equivalent load for fatigue - jesse
 % check simulation duration for fatigue - jesse -> 60 minutes without
@@ -107,7 +104,7 @@ response_data.Legend;
 
 turbine_data=load('NREL5MW.mat');
 
-E=4.7*10^9;
+E=14.7*10^9;
 EI_edge=turbine_data.Blade.EIedge(1);
 EI_flap=turbine_data.Blade.EIflap(1);
 thickness=turbine_data.Blade.Thickness(1); %base root is a load-bearing cylinder
