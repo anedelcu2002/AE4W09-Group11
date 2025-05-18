@@ -10,6 +10,9 @@
 
 
 % calculate thickness factor and recheck design with task 3, task 5 - victor
+clc
+clear
+close all
 
 function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
     figure
@@ -309,3 +312,91 @@ xlabel('Wind speed (m/s)')
 %range= c(:,2);
 %count= c(:,1);
 %D=1/K*sum(count.*(range.^m));
+
+%% Plotting spectra for clean representation of results
+% In-plane and out-of-plane blade root moment spectra and removing average
+% offset (The average displays no dynamic behaviour, just the constant weight of the
+% blades on the moment)
+M_in_plane_1 = response_data.RootMEdg1 - mean(response_data.RootMEdg1);
+M_out_plane_1 = response_data.RootMFlp1 - mean(response_data.RootMFlp1);
+
+M_in_plane_2 = response_data.RootMEdg2 - mean(response_data.RootMEdg2);
+M_out_plane_2 = response_data.RootMFlp2 - mean(response_data.RootMFlp2);
+
+M_in_plane_3 = response_data.RootMEdg3 - mean(response_data.RootMEdg3);
+M_out_plane_3 = response_data.RootMFlp3 - mean(response_data.RootMFlp3);
+
+Fs = (length(M_in_plane_1)-1)/seconds(minutes(11)); %Sampling Frequency (I think its this)
+
+% Append first minute of simulation
+M_in_plane_1 = M_in_plane_1(60*Fs+1:end);
+M_out_plane_1 = M_out_plane_1(60*Fs+1:end);
+
+M_in_plane_2 = M_in_plane_2(60*Fs+1:end);
+M_out_plane_2 = M_out_plane_2(60*Fs+1:end);
+
+M_in_plane_3 = M_in_plane_3(60*Fs+1:end);
+M_out_plane_3 = M_out_plane_3(60*Fs+1:end);
+
+T = seconds(minutes(10)); %Total duration of sampling
+N = Fs*T; %Number of samples
+t = (0:N-1)/Fs; % Time that each sample is taken in seconds
+
+% Fast Fourier Transform
+Y_in_1 = fft(M_in_plane_1);
+Y_out_1 = fft(M_out_plane_1);
+Y_in_2 = fft(M_in_plane_2);
+Y_out_2 = fft(M_out_plane_2);
+Y_in_3 = fft(M_in_plane_3);
+Y_out_3 = fft(M_out_plane_3);
+
+% Compute the magnitude (only) of the Fourier values and normalize with N
+P2_in_1 = abs(Y_in_1/N);
+P2_out_1 = abs(Y_out_1/N);
+P2_in_2 = abs(Y_in_2/N);
+P2_out_2 = abs(Y_out_2/N);
+P2_in_3 = abs(Y_in_3/N);
+P2_out_3 = abs(Y_out_3/N);
+
+% Convert to one-sided spectrum due to the complex-conjugate redundancy
+P1_in_1 = P2_in_1(1:N/2+1);
+P1_out_1 = P2_out_1(1:N/2+1);
+P1_in_2 = P2_in_2(1:N/2+1);
+P1_out_2 = P2_out_2(1:N/2+1);
+P1_in_3 = P2_in_3(1:N/2+1);
+P1_out_3 = P2_out_3(1:N/2+1);
+
+% Multiply by 2 (except for DC and Nyquist)
+P1_in_1(2:end-1) = 2*P1_in_1(2:end-1);
+P1_out_1(2:end-1) = 2*P1_out_1(2:end-1);
+P1_in_2(2:end-1) = 2*P1_in_2(2:end-1);
+P1_out_2(2:end-1) = 2*P1_out_2(2:end-1);
+P1_in_3(2:end-1) = 2*P1_in_3(2:end-1);
+P1_out_3(2:end-1) = 2*P1_out_3(2:end-1);
+
+% Frequency vector up to Nyquist Frequency
+f = Fs*(0:(N/2))/N;
+
+% Plot in-plane bending moment spectrum
+figure;
+hold on
+plot(f, P1_in_1,"DisplayName","Blade 1")
+plot(f, P1_in_2,"DisplayName","Blade 2")
+plot(f, P1_in_3,"DisplayName","Blade 3")
+title('Spectrum of In-Plane Bending Moment')
+xlabel('Frequency (Hz)')
+ylabel('Root Bending Moment (kNm)')
+xlim([0 2])
+legend
+
+% Plot out-of-plane bending moment spectrum
+figure;
+hold on
+plot(f, P1_out_1,"DisplayName","Blade 1")
+plot(f, P1_out_2,"DisplayName","Blade 2")
+plot(f, P1_out_3,"DisplayName","Blade 3")
+title('Spectrum of Out-of-Plane Bending Moment')
+xlabel('Frequency (Hz)')
+ylabel('Root Bending Moment (kNm)')
+xlim([0 2])
+legend
