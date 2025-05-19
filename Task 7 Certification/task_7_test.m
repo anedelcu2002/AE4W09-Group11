@@ -1,5 +1,10 @@
 %% to-do:
+% Feedback from the session
+% - Look at flap and edgewise moment stesses separately for fatigue.
+
+
 % determine wind speeds for each simulation - alex
+
 
 % calculate damage equivalent load for fatigue - jesse
 % check simulation duration for fatigue - jesse -> 60 minutes without
