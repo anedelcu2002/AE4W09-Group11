@@ -5,10 +5,6 @@
 % check simulation duration for fatigue - jesse -> 60 minutes without
 % transients per wind speed (page 50)
 
-
-% plot some nice spectra - victor
-
-
 % calculate thickness factor and recheck design with task 3, task 5 - victor
 clc
 clear
@@ -385,7 +381,7 @@ plot(f, P1_in_2,"DisplayName","Blade 2")
 plot(f, P1_in_3,"DisplayName","Blade 3")
 title('Spectrum of In-Plane Bending Moment')
 xlabel('Frequency (Hz)')
-ylabel('Root Bending Moment (kNm)')
+ylabel('Amplitude of Root Bending Moment (kNm)')
 xlim([0 2])
 legend
 
@@ -397,6 +393,98 @@ plot(f, P1_out_2,"DisplayName","Blade 2")
 plot(f, P1_out_3,"DisplayName","Blade 3")
 title('Spectrum of Out-of-Plane Bending Moment')
 xlabel('Frequency (Hz)')
-ylabel('Root Bending Moment (kNm)')
+ylabel('Amplitude of Root Bending Moment (kNm)')
+xlim([0 2])
+legend
+
+% Blade root stress spectra. Again, remove the average value due to weight
+% which is a static characterisitc. We are only interested in dynamic
+% effects.
+
+RootSigma1 = root_stress1 - mean(root_stress1);
+RootSigma2 = root_stress2 - mean(root_stress2);
+RootSigma3 = root_stress3 - mean(root_stress3);
+
+% Append first minute of simulation
+RootSigma1 = RootSigma1(60*Fs+1:end);
+RootSigma2 = RootSigma2(60*Fs+1:end);
+RootSigma3 = RootSigma3(60*Fs+1:end);
+
+% Fourier Transform
+FourierSigma1 = fft(RootSigma1);
+FourierSigma2 = fft(RootSigma2);
+FourierSigma3 = fft(RootSigma3);
+
+% Take amplitude only and normalize by N. Take one-sided fourier
+
+Sigma1 = abs(FourierSigma1/N);
+Sigma2 = abs(FourierSigma2/N);
+Sigma3 = abs(FourierSigma3/N);
+Sigma1 = Sigma1(1:N/2+1);
+Sigma2 = Sigma2(1:N/2+1);
+Sigma3 = Sigma3(1:N/2+1);
+
+% Multiply by 2 except DC and Nyquist
+
+Sigma1(2:end-1) = 2*Sigma1(2:end-1);
+Sigma2(2:end-1) = 2*Sigma2(2:end-1);
+Sigma3(2:end-1) = 2*Sigma3(2:end-1);
+
+% Plot Root Stress spectra
+
+figure;
+hold on
+plot(f, Sigma1,"DisplayName","Blade 1")
+plot(f, Sigma2,"DisplayName","Blade 2")
+plot(f, Sigma3,"DisplayName","Blade 3")
+title('Spectrum of Blade Root Stress')
+xlabel('Frequency (Hz)')
+ylabel('Amplitude of Blade Root Stress (Pa)')
+xlim([0 2])
+legend
+
+% Tip Deflection spectra. Again, remove the average value due to weight
+% which is a static characterisitc. We are only interested in dynamic
+% effects.
+
+Deflection1 = response_data.OoPDefl1 - mean(response_data.OoPDefl1);
+Deflection2 = response_data.OoPDefl2 - mean(response_data.OoPDefl2);
+Deflection3 = response_data.OoPDefl3 - mean(response_data.OoPDefl3);
+
+% Append first minute of simulation
+Deflection1 = Deflection1(60*Fs+1:end);
+Deflection2 = Deflection2(60*Fs+1:end);
+Deflection3 = Deflection3(60*Fs+1:end);
+
+% Fourier Transform
+FourierDef1 = fft(Deflection1);
+FourierDef2 = fft(Deflection2);
+FourierDef3 = fft(Deflection3);
+
+% Take amplitude only and normalize by N. Take one-sided fourier
+
+Defl1 = abs(FourierDef1/N);
+Delf2 = abs(FourierDef2/N);
+Defl3 = abs(FourierDef3/N);
+Defl1 = Defl1(1:N/2+1);
+Delf2 = Delf2(1:N/2+1);
+Defl3 = Defl3(1:N/2+1);
+
+% Multiply by 2 except DC and Nyquist
+
+Defl1(2:end-1) = 2*Defl1(2:end-1);
+Delf2(2:end-1) = 2*Delf2(2:end-1);
+Defl3(2:end-1) = 2*Defl3(2:end-1);
+
+% Plot Root Stress spectra
+
+figure;
+hold on
+plot(f, Defl1,"DisplayName","Blade 1")
+plot(f, Delf2,"DisplayName","Blade 2")
+plot(f, Defl3,"DisplayName","Blade 3")
+title('Spectrum of Out-of-Plane Deflection')
+xlabel('Frequency (Hz)')
+ylabel('Amplitude of Deflection (m)')
 xlim([0 2])
 legend
