@@ -112,8 +112,8 @@ E=14.7*10^9; %Pa
 EI_edge=turbine_data.Blade.EIedge(1);
 EI_flap=turbine_data.Blade.EIflap(1);
 thickness=turbine_data.Blade.Thickness(1); %base root is a load-bearing cylinder
-sf_idealization_flap=2.1; %safety factor on flapwise stress to account for blade root shell idealization
-sf_idealization_edge=1.5; %safety factor on edgewise stress to account for blade root shell idealization
+%sf_idealization_flap=2.1; %safety factor on flapwise stress to account for blade root shell idealization
+%sf_idealization_edge=1.5; %safety factor on edgewise stress to account for blade root shell idealization
 
 %% plot simulation outputs
 plot_b=true;
@@ -164,9 +164,9 @@ if analysis==1
     maximum_deflection=maximum_deflection*sf_m_defl*sf_f_defl*sf_n_defl; % maximum deflection in meters
     disp(['Maximum tip deflection in out-of-plane direction is ', num2str(maximum_deflection), ' meters'])
 
-    root_stress1=calculate_stress(response_data.RootMFlp1*1000*sf_idealization_flap, response_data.RootMEdg1*1000*sf_idealization_edge, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
-    root_stress2=calculate_stress(response_data.RootMFlp2*1000*sf_idealization_flap, response_data.RootMEdg2*1000*sf_idealization_edge, thickness/2, EI_flap, EI_edge, E);
-    root_stress3=calculate_stress(response_data.RootMFlp3*1000*sf_idealization_flap, response_data.RootMEdg3*1000*sf_idealization_edge, thickness/2, EI_flap, EI_edge, E);
+    root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
+    root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
+    root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
 
     if plot_b
         figure;
@@ -199,9 +199,7 @@ if analysis==1
 
 elseif analysis==0
     % TODO: remove transient part of the simulation
-    % TODO: look at flap and edge stresses separately (remember to apply
-    % sf_idealization_flap and sf_idealization_edge to the stress
-    % amplitudes!)
+    % TODO: look at flap and edge stresses separately
     root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
     root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
     root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
