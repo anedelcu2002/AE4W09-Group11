@@ -12,22 +12,22 @@ clear
 close all
 
 function cumulativeDamageStemPlot(ni,Nfi, blade_nr) % stolen from https://nl.mathworks.com/help/signal/ug/practical-introduction-to-fatigue-analysis-using-rainflow-counting.html
-    figure
-    L = length(ni);
-    damage = sum(ni./Nfi);
-    stem(0,NaN,"Color",[0 1 0])
-    title(["Cumulative Damage from Palmgren-Miner Rule, blade ", num2str(blade_nr)])
-    xlabel("Cycle $i$","Interpreter","latex")
-    ylabel("Cum. damage $D_{i} = \sum_{j=1}^{i}n_{j}/N_{f,j}$","Interpreter","latex")
-    set(gca,"XLim",[0 L],"YLim",[0 damage])
-    grid("on")
-    iter = unique([1:round(L/100):L,L]);
-    hold(gca,"on")
-    for i = iter
-        cdi = sum(ni(1:i)./Nfi(1:i)); % cumulative damge upto cycle i
-        plt = stem(i,cdi,"filled");
-        setStemColor(plt,cdi,0.95)
-    end
+figure
+L = length(ni);
+damage = sum(ni./Nfi);
+stem(0,NaN,"Color",[0 1 0])
+title(["Cumulative Damage from Palmgren-Miner Rule, blade ", num2str(blade_nr)])
+xlabel("Cycle $i$","Interpreter","latex")
+ylabel("Cum. damage $D_{i} = \sum_{j=1}^{i}n_{j}/N_{f,j}$","Interpreter","latex")
+set(gca,"XLim",[0 L],"YLim",[0 damage])
+grid("on")
+iter = unique([1:round(L/100):L,L]);
+hold(gca,"on")
+for i = iter
+    cdi = sum(ni(1:i)./Nfi(1:i)); % cumulative damge upto cycle i
+    plt = stem(i,cdi,"filled");
+    setStemColor(plt,cdi,0.95)
+end
 end
 
 function setStemColor(hplt,cumulativeDamage,gamma)
@@ -43,7 +43,7 @@ else
         c1 = c(3,:);
         c2 = c(2,:);
     end
-    color = zeros(1,3);    
+    color = zeros(1,3);
     for i = 1:3
         color(i) = c1(i)+(c2(i)-c1(i))*cumulativeDamage;
     end
@@ -52,49 +52,53 @@ hplt.Color = color;
 end
 
 function stress=calculate_stress(moment_1, moment_2, thickness, EI_1, EI_2, E)
-    moment_sum=(moment_1.^2.+moment_2.^2).^0.5;
-    distance_1=thickness.*(moment_1./moment_sum);
-    distance_2=thickness.*(moment_2./moment_sum);
-    stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
+moment_sum=(moment_1.^2.+moment_2.^2).^0.5;
+% TODO: This should be abs right?
+distance_1=thickness.*(moment_1./moment_sum);
+distance_2=thickness.*(moment_2./moment_sum);
+stress=moment_1.*distance_1./EI_1.*E+moment_2.*distance_2./EI_2.*E;
+
+moment_sum = sqrt(moment_1.^2 + moment_2.^2);
+stress = moment_sum * thickness / EI_1 * E;
 end
 
 function [D, DEL] = rainflow_counting(stress_timeseries, blade_nr, plot_b) % stolen from brightspace
-    gam_m=1; % safety factor for material properties
-    gam_f=1.2; % safety factor for loads
-    gam_n=1.15; % safety factor for severity of effect
+gam_m=1; % safety factor for material properties
+gam_f=1.2; % safety factor for loads
+gam_n=1.15; % safety factor for severity of effect
 
-    S_s= gam_m.*gam_f.*gam_n.*stress_timeseries;
+S_s= gam_m.*gam_f.*gam_n.*stress_timeseries;
 
-    % Perform rainflow count, blade 1
-    [c,hist,edges,rmm,idx] = rainflow(S_s);
+% Perform rainflow count, blade 1
+[c,hist,edges,rmm,idx] = rainflow(S_s);
 
-    % Plot histogram
-    if plot_b
-        figure;
-        histogram('BinEdges',edges','BinCounts',sum(hist,2))
-        title(['Rainflow counting, blade ', num2str(blade_nr)])
-        xlabel('Stress Range')
-        ylabel('Cycle Counts')
-    end
+% Plot histogram
+if plot_b
+    figure;
+    histogram('BinEdges',edges','BinCounts',sum(hist,2))
+    title(['Rainflow counting, blade ', num2str(blade_nr)])
+    xlabel('Stress Range')
+    ylabel('Cycle Counts')
+end
 
-    % Set S-N curve and use Minor's rule to determine damage
-    %   by summing damages from each individual cycle or half cycle
-    m=9; % slope S-N curve N*S^m=K (with S stress range)
-    UCS=600*10^6; % ultimate compression strength (Nm2);
-    K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
+% Set S-N curve and use Minor's rule to determine damage
+%   by summing damages from each individual cycle or half cycle
+m=9; % slope S-N curve N*S^m=K (with S stress range)
+UCS=600*10^6; % ultimate compression strength (Nm2);
+K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
 
-    range= c(:,2);
-    count= c(:,1);
-    D=1/K*sum(count.*(range.^m));
-    
-    if plot_b
-        cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
-    end
+range= c(:,2);
+count= c(:,1);
+D=1/K*sum(count.*(range.^m));
 
-    % Also calculate the damage equivalent load.
-    Dt = 0.008;
-    neq = length(S_s) / Dt;  % assume 1h of data.
-    DEL = (sum(count .* (range.^m)) / neq).^(1/m);
+if plot_b
+    cumulativeDamageStemPlot(count,K./(range.^m), blade_nr);
+end
+
+% Also calculate the damage equivalent load.
+Dt = 0.008;
+neq = length(S_s) / Dt;
+DEL = (sum(count .* (range.^m)) / neq).^(1/m);
 end
 
 
@@ -102,7 +106,7 @@ end
 response_data=load('nrel_cert.mat');
 response_data.Legend;
 
-turbine_data=load('NREL5MW.mat'); % remember to change with BulgAir.Complete!
+turbine_data=load('BulgAirComplete.mat'); % remember to change with BulgAir.Complete!
 
 allowable_stress=600*10^6; %Pa, check if this is indeed the value to compare against
 allowable_deflection=turbine_data.Nacelle.Hub.Overhang+...
@@ -116,7 +120,7 @@ sf_idealization_flap=2.1; %safety factor on flapwise stress to account for blade
 sf_idealization_edge=1.5; %safety factor on edgewise stress to account for blade root shell idealization
 
 %% plot simulation outputs
-plot_b=true;
+plot_b=false;
 
 if plot_b
     figure;
@@ -154,7 +158,7 @@ if plot_b
 end
 
 %% perform post-processing
-analysis=1; % 1 for extreme load, 0 for fatigue
+analysis=0; % 1 for extreme load, 0 for fatigue
 
 if analysis==1
     maximum_deflection=max([max(response_data.OoPDefl1), max(response_data.OoPDefl2), max(response_data.OoPDefl3)]); %maximum out of plane tip deflection in meters
@@ -202,45 +206,96 @@ elseif analysis==0
     % TODO: look at flap and edge stresses separately (remember to apply
     % sf_idealization_flap and sf_idealization_edge to the stress
     % amplitudes!)
-    root_stress1=calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);%blade 1 root stress timeseries
-    root_stress2=calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
-    root_stress3=calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
+    plot_b=false;
 
-    if plot_b
-        figure;
-        plot(response_data.Time, root_stress1);
-        hold on;
-        plot(response_data.Time, root_stress2);
-        hold on;
-        plot(response_data.Time, root_stress3);
-        legend('blade 1', 'blade 2', 'blade 3');
-        title('Blade root stress amplitude')
-        ylabel('stress (N/m2)')
-        xlabel('time (s)')
+    fatigue_folder = 'fatigue_simulations';
+    windspeeds = 3:25;
+    damages_flap = zeros(size(windspeeds));
+    damages_edge = zeros(size(windspeeds));
+    DEL_flap = zeros(size(windspeeds));
+    DEL_edge = zeros(size(windspeeds));
+
+    for i = 1:length(windspeeds)
+        U = windspeeds(i);
+
+        % Construct the expected file name for this wind speed
+        sim_file = fullfile(fatigue_folder, sprintf('fatigue_simulation_U=%.2f.mat', U));
+        if ~isfile(sim_file)
+            warning('Simulation file %s not found. Skipping.', sim_file);
+            continue
+        end
+        response_data = load(sim_file);
+
+        % % TODO: remove transient part of the simulation if needed
+        % % Remove the first 60 seconds (transient) from the data
+        % transient_idx = response_data.Time <= 60;
+        % response_data.RootMFlp1(transient_idx) = [];
+        % response_data.RootMFlp2(transient_idx) = [];
+        % response_data.RootMFlp3(transient_idx) = [];
+        % response_data.Time(transient_idx) = [];
+        %
+        % % root_stress1 = calculate_stress(response_data.RootMFlp1*1000, response_data.RootMEdg1*1000, thickness/2, EI_flap, EI_edge, E);
+        % % root_stress2 = calculate_stress(response_data.RootMFlp2*1000, response_data.RootMEdg2*1000, thickness/2, EI_flap, EI_edge, E);
+        % % root_stress3 = calculate_stress(response_data.RootMFlp3*1000, response_data.RootMEdg3*1000, thickness/2, EI_flap, EI_edge, E);
+        % root_stress1 = response_data.RootMFlp1*1000 * thickness/2 * E / EI_flap * 1.0*1.2*1.15;
+        % root_stress2 = response_data.RootMFlp2*1000 * thickness/2 * E / EI_flap * 1.0*1.2*1.15;
+        % root_stress3 = response_data.RootMFlp3*1000 * thickness/2 * E / EI_flap * 1.0*1.2*1.15;
+        %
+        % if plot_b
+        %     figure;
+        %     plot(response_data.Time, root_stress1);
+        %     hold on;
+        %     plot(response_data.Time, root_stress2);
+        %     hold on;
+        %     plot(response_data.Time, root_stress3);
+        %     legend('blade 1', 'blade 2', 'blade 3');
+        %     title(sprintf('Blade root stress amplitude (U=%.2f m/s)', U))
+        %     ylabel('stress (N/m2)')
+        %     xlabel('time (s)')
+        % end
+        %
+        % [D1, DEL1] = rainflow_counting(root_stress1, 1, plot_b);
+        % [D2, DEL2] = rainflow_counting(root_stress2, 2, plot_b);
+        % [D3, DEL3] = rainflow_counting(root_stress3, 3, plot_b);
+        % % disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1), ', with DEL ', num2str(DEL1)])
+        % % disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2), ', with DEL ', num2str(DEL2)])
+        % % disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3), ', with DEL ', num2str(DEL3)])
+
+        % I couldn't figure out why the calculation from the provided code
+        % and the one from brightspace were different so I opted to just
+        % use the code from brightspace. calculate_stress seems wrong
+        % because it makes the stress always positive, resulting in smaller
+        % stress ranges but that didn't explain the whole difference.
+        gamma_total = 1.0 * 1.2 * 1.15;
+        [D1_flap, DEL1_flap] = D_from_brightspace(response_data.RootMFlp1, response_data.Time, thickness/2, EI_flap/E, gamma_total);
+        [D2_flap, DEL2_flap] = D_from_brightspace(response_data.RootMFlp2, response_data.Time, thickness/2, EI_flap/E, gamma_total);
+        [D3_flap, DEL3_flap] = D_from_brightspace(response_data.RootMFlp3, response_data.Time, thickness/2, EI_flap/E, gamma_total);
+        [D1_edge, DEL1_edge] = D_from_brightspace(response_data.RootMEdg1, response_data.Time, thickness/2, EI_edge/E, gamma_total);
+        [D2_edge, DEL2_edge] = D_from_brightspace(response_data.RootMEdg2, response_data.Time, thickness/2, EI_edge/E, gamma_total);
+        [D3_edge, DEL3_edge] = D_from_brightspace(response_data.RootMEdg3, response_data.Time, thickness/2, EI_edge/E, gamma_total);
+
+        damages_flap(i) = mean([D1_flap, D2_flap, D3_flap]);
+        damages_edge(i) = mean([D1_edge, D2_edge, D3_edge]);
+        DEL_flap(i) = mean([DEL1_flap, DEL2_flap, DEL3_flap]);
+        DEL_edge(i) = mean([DEL1_edge, DEL2_edge, DEL3_edge]);
+        fprintf('Windspeed: %.2f m/s, Flap damage: %.4g, Edge damage: %.4g, DEL_flap: %.4g, DEL_edge: %.4g\n', U, damages_flap(i), damages_edge(i), DEL_flap(i), DEL_edge(i));
     end
-
-    [D1, DEL1] = rainflow_counting(root_stress1, 1, plot_b);
-    [D2, DEL2] = rainflow_counting(root_stress2, 2, plot_b);
-    [D3, DEL3] = rainflow_counting(root_stress3, 3, plot_b);
-    disp(['Cumulative fatigue damage on blade 1 is ', num2str(D1), ', with DEL ', num2str(DEL1)])
-    disp(['Cumulative fatigue damage on blade 2 is ', num2str(D2), ', with DEL ', num2str(DEL2)])
-    disp(['Cumulative fatigue damage on blade 3 is ', num2str(D3), ', with DEL ', num2str(DEL3)])
-
-    fprintf("Average damage for the three blades is %.4g.\n", mean([D1, D2, D3]))
-
 end
+
+
+
 
 
 %% Lifetime fatigue calculation.
 % Using equation H.3 from the IEC 61400-1.
-function [lifetime_damage, accumulated_damage] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages, wbl_scale, wbl_shape)
+function [lifetime_damage, accumulated_damage, damage_per_windspeed] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages, wbl_scale, wbl_shape)
 arguments
     lifetime_s double  % Lifetime of the turbine in seconds.
     period_s double    % Period over which the damages were calculated
     windspeeds double  % Wind speeds for which the damages were calculated
     damages double     % Damage for the wind speed
-    wbl_scale double   % Weibull scale parameter 
-    wbl_shape double   % Weibull shape parameter 
+    wbl_scale double   % Weibull scale parameter
+    wbl_shape double   % Weibull shape parameter
 end
 
 assert(length(damages) == length(windspeeds), "damages (%i) must be calculated for each windspeed (%i).", length(damages), length(windspeeds))
@@ -251,259 +306,342 @@ dw = dw(1);
 windspeeds_lower_bounds = windspeeds - 0.5 * dw;
 windspeeds_upper_bounds = windspeeds + 0.5 * dw;
 
+% Checked this and it is correct.
 windspeeds_probability = wblcdf(windspeeds_upper_bounds, wbl_scale, wbl_shape) - wblcdf(windspeeds_lower_bounds, wbl_scale, wbl_shape);
 
-lifetime_damage = lifetime_s / period_s * sum(damages .* windspeeds_probability);
-accumulated_damage = lifetime_s / period_s * cumsum(damages .* windspeeds_probability);
+% lifetime_damage = lifetime_s / period_s * sum(damages .* windspeeds_probability);
+% accumulated_damage = lifetime_s / period_s * cumsum(damages .* windspeeds_probability);
+damage_per_windspeed = lifetime_s / period_s * damages .* windspeeds_probability;
+accumulated_damage = cumsum(damage_per_windspeed);
+lifetime_damage = accumulated_damage(end);
 
 end
 
 % Inputs to the lifetime damage calculation.
 lifetime_s = seconds(years(20));
-period_s = seconds(minutes(10));
+period_s = seconds(hours(1));
 
-windspeeds = 3:25;
-% Hmm this is not so super nice, it'd be nicer to get the damages of all
-% the simulations automatically.
-damages = [1e-8, 1e-7, 1e-6, ...
-    1e-6, 1e-6, 1e-6, 1e-6, 1e-6, ...
-    1e-6, 1e-6, 1e-6, 1e-6, 1e-6, ...
-    1e-6, 1e-6, 1e-7, 1e-6, 1e-6, ...
-    1e-6, 1e-6, 1e-6, 1e-6, 1e-6];
-    
 % Weibull distribution at hub height (see bottom of MAIN.m in Task 2).
 scale = 8.45387;
 shape = 1.50374;
 
-[lifetime_damage, accumulated_damage] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages, scale, shape);
-fprintf("Lifetime damage is %.3f (should be below 1).\n", lifetime_damage)
+[lifetime_damage_flap, accumulated_damage_flap, damage_per_windspeed_flap] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages_flap, scale, shape);
+[lifetime_damage_edge, accumulated_damage_edge, damage_per_windspeed_edge] = calc_lifetime_damage(lifetime_s, period_s, windspeeds, damages_edge, scale, shape);
+fprintf("Lifetime damage flap: %.3g and edge: %.3g (should be below 1).\n", lifetime_damage_flap, lifetime_damage_edge)
 
 %% Make some nice plots.
 % TODO: Look up what plots they want us to put in the report.
 figure;
 yyaxis left
-plot(windspeeds, damages)
-ylim([0, max(damages)*1.2])
+% Plot the damage that you'd have if you spent a lifetime at that wind
+% speed.
+plot(windspeeds, damages_flap*lifetime_s/period_s); hold on
+plot(windspeeds, damages_edge*lifetime_s/period_s)
+% ylim([0, max([y_flap, y_edge])*5])
 set(gca, 'YScale', 'log')
-ylabel('Damage (-)')
+% ylim([1e-16, 1e-6])
+ylabel('Lifetime damage (-)')
 
 yyaxis right
 all_windspeeds = linspace(0, 30, 1000);
-plot(all_windspeeds, wblpdf(all_windspeeds, scale, shape))
+y = wblpdf(all_windspeeds, scale, shape);
+plot(all_windspeeds, y)
+ylim([0, 0.1])
 ylabel('Wind speed probability (-)')
 
+legend('flapwise', 'edgewise', '', 'location', 'southeast')
 xlabel('Wind speed (m/s)')
 
 % legend("Damage per wind speed", "Wind speed distribution")
 
+%% New plots.
+figure;
+% Top plot: DEL vs windspeed with dual y-axes
+subplot(3,1,1);
+yyaxis left
+plot(windspeeds, DEL_flap, '-o', 'DisplayName', 'Flapwise DEL'); hold on;
+ylabel('DEL (kNm)');
+yyaxis right
+plot(windspeeds, DEL_edge, '-s', 'DisplayName', 'Edgewise DEL');
+ylabel('DEL (kNm)');
+% Set same y-axis limits for both y-axes
+yyaxis left
+ylim([0 15000])
+yyaxis right
+ylim([0 15000])
+legend('Flapwise', 'Edgewise', 'location', 'southeast');
+title('Damage Equivalent Load (DEL) vs Wind Speed');
+grid on;
 
-%M=response_data.RootMFlp1; % blade root flap moment (kNm)
+
+% Middle plot: Damage per windspeed with dual y-axes
+subplot(3,1,2);
+yyaxis left
+plot(windspeeds, damage_per_windspeed_flap, '-o', 'DisplayName', 'Flapwise'); hold on;
+ylabel('Damage (-)');
+
+yyaxis right
+plot(windspeeds, damage_per_windspeed_edge, '-s', 'DisplayName', 'Edgewise');
+ylabel('Damage (-)');
+
+legend('Flapwise', 'Edgewise', 'location', 'southeast');
+title('Lifetime Damage per Wind Speed');
+grid on;
+
+% Bottom plot: Weibull distribution
+subplot(3,1,3);
+all_windspeeds = linspace(0, 25, 1000);
+y = wblpdf(all_windspeeds, scale, shape);
+plot(all_windspeeds, y, 'k', 'DisplayName', 'Weibull PDF');
+ylabel('Probability');
+xlabel('Wind speed (m/s)');
+title('Weibull Wind Speed Distribution');
+legend('show', 'location','southeast');
+grid on;
+
+exportgraphics(gcf, 'fatigue_damage.pdf')
+
+
+%% From brightspace
+function [D, DEL] = D_from_brightspace(M, time, y, I, gamma_total)
 % Remove 60 s start-up transient
-%Ind=find(response_data.Time<=60);
-%M(Ind)=[];
-% Set geometrical properties of the cross section and determine stress 
-%I=1.37; % blade root inertia (m^4)
-%y=1.5; % distance to neutral line (m)
-%S=M*y/I;
+Ind=find(time < 60);
+M(Ind)=[];
+% Set geometrical properties of the cross section and determine stress
+% I=EI_flap / E;  %1.37; % blade root inertia (m^4)
+% y=thickness/2;  %1.5; % distance to neutral line (m)
+S=M*y/I;
 % Set safety factors and apply these to stress
-%gam_m=1; % safety factor for material properties
-%gam_f=1; % safety factor for loads
-%gam_n=1; % safety factor for severity of effect
-%S_s = gam_m*gam_f*gam_n*S;
+% gam_m=1; % safety factor for material properties
+% gam_f=1.2; % safety factor for loads
+% gam_n=1.15; % safety factor for severity of effect
+% gamma_total = gam_m * gam_f * gam_n;
+S_s = gamma_total*S;
+
+% fprintf('%.2g, ', max(S_s))
 
 % Perform rainflow count
-%[c,hist,edges,rmm,idx] = rainflow(S_s);
+[c,hist,edges,rmm,idx] = rainflow(S_s);
 
-% Plot histogram
-%histogram('BinEdges',edges','BinCounts',sum(hist,2))
-%xlabel('Stress Range')
-%ylabel('Cycle Counts')
+% % Plot histogram
+% histogram('BinEdges',edges','BinCounts',sum(hist,2))
+% xlabel('Stress Range')
+% ylabel('Cycle Counts')
 
 % Set S-N curve and use Minor's rule to determine damage
 %   by summing damages from each individual cycle or half cycle
-%m=9; % slope S-N curve N*S^m=K (with S stress range)
-%UCS=6e5; % ultimate compression strength (kNm);
-%K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
-%range= c(:,2);
-%count= c(:,1);
-%D=1/K*sum(count.*(range.^m));
+m=9; % slope S-N curve N*S^m=K (with S stress range)
+UCS=6e5; % ultimate compression strength (kNm);
+K=(2*UCS)^m; % S-N in stress ranges, so factor 2 for amplitudes
+range= c(:,2);
+count= c(:,1);
+D=1/K*sum(count.*(range.^m));
+
+
+% From here, it's no longer from brightspace.
+% Calculate the DEL.
+[c, hist, edges, rmm, idx] = rainflow(M);
+range = c(:,2);
+count = c(:,1);
+neq = time(end);
+DEL = (sum(count .* (range.^m)) / neq).^(1/m);
+
+% Gives the same result.
+% K = UCS^m;
+% amp = 0.5 * range;
+% D = sum(count .* amp.^m) / K;
+end
+
+%% Damage is super small, let's check.
+response_data = load('nrel_cert.mat');
+
+D = D_from_brightspace(response_data.RootMFlp1, response_data.Time, 1.5, 1.37, gamma_total);
+
+fprintf("NREL cert damage is %.3g for %d minutes, so also very low.\n", D, minutes(seconds(response_data.Time(end))));
 
 %% Plotting spectra for clean representation of results
 % In-plane and out-of-plane blade root moment spectra and removing average
 % offset (The average displays no dynamic behaviour, just the constant weight of the
 % blades on the moment)
-M_in_plane_1 = response_data.RootMEdg1 - mean(response_data.RootMEdg1);
-M_out_plane_1 = response_data.RootMFlp1 - mean(response_data.RootMFlp1);
+plot_b = false;
+if plot_b
+    M_in_plane_1 = response_data.RootMEdg1 - mean(response_data.RootMEdg1);
+    M_out_plane_1 = response_data.RootMFlp1 - mean(response_data.RootMFlp1);
 
-M_in_plane_2 = response_data.RootMEdg2 - mean(response_data.RootMEdg2);
-M_out_plane_2 = response_data.RootMFlp2 - mean(response_data.RootMFlp2);
+    M_in_plane_2 = response_data.RootMEdg2 - mean(response_data.RootMEdg2);
+    M_out_plane_2 = response_data.RootMFlp2 - mean(response_data.RootMFlp2);
 
-M_in_plane_3 = response_data.RootMEdg3 - mean(response_data.RootMEdg3);
-M_out_plane_3 = response_data.RootMFlp3 - mean(response_data.RootMFlp3);
+    M_in_plane_3 = response_data.RootMEdg3 - mean(response_data.RootMEdg3);
+    M_out_plane_3 = response_data.RootMFlp3 - mean(response_data.RootMFlp3);
 
-Fs = (length(M_in_plane_1)-1)/seconds(minutes(11)); %Sampling Frequency (I think its this)
+    Fs = (length(M_in_plane_1)-1)/seconds(minutes(11)); %Sampling Frequency (I think its this)
 
-% Append first minute of simulation
-M_in_plane_1 = M_in_plane_1(60*Fs+1:end);
-M_out_plane_1 = M_out_plane_1(60*Fs+1:end);
+    % Append first minute of simulation
+    M_in_plane_1 = M_in_plane_1(60*Fs+1:end);
+    M_out_plane_1 = M_out_plane_1(60*Fs+1:end);
 
-M_in_plane_2 = M_in_plane_2(60*Fs+1:end);
-M_out_plane_2 = M_out_plane_2(60*Fs+1:end);
+    M_in_plane_2 = M_in_plane_2(60*Fs+1:end);
+    M_out_plane_2 = M_out_plane_2(60*Fs+1:end);
 
-M_in_plane_3 = M_in_plane_3(60*Fs+1:end);
-M_out_plane_3 = M_out_plane_3(60*Fs+1:end);
+    M_in_plane_3 = M_in_plane_3(60*Fs+1:end);
+    M_out_plane_3 = M_out_plane_3(60*Fs+1:end);
 
-T = seconds(minutes(10)); %Total duration of sampling
-N = Fs*T; %Number of samples
-t = (0:N-1)/Fs; % Time that each sample is taken in seconds
+    T = seconds(minutes(10)); %Total duration of sampling
+    N = Fs*T; %Number of samples
+    t = (0:N-1)/Fs; % Time that each sample is taken in seconds
 
-% Fast Fourier Transform
-Y_in_1 = fft(M_in_plane_1);
-Y_out_1 = fft(M_out_plane_1);
-Y_in_2 = fft(M_in_plane_2);
-Y_out_2 = fft(M_out_plane_2);
-Y_in_3 = fft(M_in_plane_3);
-Y_out_3 = fft(M_out_plane_3);
+    % Fast Fourier Transform
+    Y_in_1 = fft(M_in_plane_1);
+    Y_out_1 = fft(M_out_plane_1);
+    Y_in_2 = fft(M_in_plane_2);
+    Y_out_2 = fft(M_out_plane_2);
+    Y_in_3 = fft(M_in_plane_3);
+    Y_out_3 = fft(M_out_plane_3);
 
-% Compute the magnitude (only) of the Fourier values and normalize with N
-P2_in_1 = abs(Y_in_1/N);
-P2_out_1 = abs(Y_out_1/N);
-P2_in_2 = abs(Y_in_2/N);
-P2_out_2 = abs(Y_out_2/N);
-P2_in_3 = abs(Y_in_3/N);
-P2_out_3 = abs(Y_out_3/N);
+    % Compute the magnitude (only) of the Fourier values and normalize with N
+    P2_in_1 = abs(Y_in_1/N);
+    P2_out_1 = abs(Y_out_1/N);
+    P2_in_2 = abs(Y_in_2/N);
+    P2_out_2 = abs(Y_out_2/N);
+    P2_in_3 = abs(Y_in_3/N);
+    P2_out_3 = abs(Y_out_3/N);
 
-% Convert to one-sided spectrum due to the complex-conjugate redundancy
-P1_in_1 = P2_in_1(1:N/2+1);
-P1_out_1 = P2_out_1(1:N/2+1);
-P1_in_2 = P2_in_2(1:N/2+1);
-P1_out_2 = P2_out_2(1:N/2+1);
-P1_in_3 = P2_in_3(1:N/2+1);
-P1_out_3 = P2_out_3(1:N/2+1);
+    % Convert to one-sided spectrum due to the complex-conjugate redundancy
+    P1_in_1 = P2_in_1(1:N/2+1);
+    P1_out_1 = P2_out_1(1:N/2+1);
+    P1_in_2 = P2_in_2(1:N/2+1);
+    P1_out_2 = P2_out_2(1:N/2+1);
+    P1_in_3 = P2_in_3(1:N/2+1);
+    P1_out_3 = P2_out_3(1:N/2+1);
 
-% Multiply by 2 (except for DC and Nyquist)
-P1_in_1(2:end-1) = 2*P1_in_1(2:end-1);
-P1_out_1(2:end-1) = 2*P1_out_1(2:end-1);
-P1_in_2(2:end-1) = 2*P1_in_2(2:end-1);
-P1_out_2(2:end-1) = 2*P1_out_2(2:end-1);
-P1_in_3(2:end-1) = 2*P1_in_3(2:end-1);
-P1_out_3(2:end-1) = 2*P1_out_3(2:end-1);
+    % Multiply by 2 (except for DC and Nyquist)
+    P1_in_1(2:end-1) = 2*P1_in_1(2:end-1);
+    P1_out_1(2:end-1) = 2*P1_out_1(2:end-1);
+    P1_in_2(2:end-1) = 2*P1_in_2(2:end-1);
+    P1_out_2(2:end-1) = 2*P1_out_2(2:end-1);
+    P1_in_3(2:end-1) = 2*P1_in_3(2:end-1);
+    P1_out_3(2:end-1) = 2*P1_out_3(2:end-1);
 
-% Frequency vector up to Nyquist Frequency
-f = Fs*(0:(N/2))/N;
+    % Frequency vector up to Nyquist Frequency
+    f = Fs*(0:(N/2))/N;
 
-% Plot in-plane bending moment spectrum
-figure;
-hold on
-plot(f, P1_in_1,"DisplayName","Blade 1")
-plot(f, P1_in_2,"DisplayName","Blade 2")
-plot(f, P1_in_3,"DisplayName","Blade 3")
-title('Spectrum of In-Plane Bending Moment')
-xlabel('Frequency (Hz)')
-ylabel('Amplitude of Root Bending Moment (kNm)')
-xlim([0 2])
-legend
+    % Plot in-plane bending moment spectrum
+    figure;
+    hold on
+    plot(f, P1_in_1,"DisplayName","Blade 1")
+    plot(f, P1_in_2,"DisplayName","Blade 2")
+    plot(f, P1_in_3,"DisplayName","Blade 3")
+    title('Spectrum of In-Plane Bending Moment')
+    xlabel('Frequency (Hz)')
+    ylabel('Amplitude of Root Bending Moment (kNm)')
+    xlim([0 2])
+    legend
 
-% Plot out-of-plane bending moment spectrum
-figure;
-hold on
-plot(f, P1_out_1,"DisplayName","Blade 1")
-plot(f, P1_out_2,"DisplayName","Blade 2")
-plot(f, P1_out_3,"DisplayName","Blade 3")
-title('Spectrum of Out-of-Plane Bending Moment')
-xlabel('Frequency (Hz)')
-ylabel('Amplitude of Root Bending Moment (kNm)')
-xlim([0 2])
-legend
+    % Plot out-of-plane bending moment spectrum
+    figure;
+    hold on
+    plot(f, P1_out_1,"DisplayName","Blade 1")
+    plot(f, P1_out_2,"DisplayName","Blade 2")
+    plot(f, P1_out_3,"DisplayName","Blade 3")
+    title('Spectrum of Out-of-Plane Bending Moment')
+    xlabel('Frequency (Hz)')
+    ylabel('Amplitude of Root Bending Moment (kNm)')
+    xlim([0 2])
+    legend
 
-% Blade root stress spectra. Again, remove the average value due to weight
-% which is a static characterisitc. We are only interested in dynamic
-% effects.
+    % Blade root stress spectra. Again, remove the average value due to weight
+    % which is a static characterisitc. We are only interested in dynamic
+    % effects.
 
-RootSigma1 = root_stress1 - mean(root_stress1);
-RootSigma2 = root_stress2 - mean(root_stress2);
-RootSigma3 = root_stress3 - mean(root_stress3);
+    RootSigma1 = root_stress1 - mean(root_stress1);
+    RootSigma2 = root_stress2 - mean(root_stress2);
+    RootSigma3 = root_stress3 - mean(root_stress3);
 
-% Append first minute of simulation
-RootSigma1 = RootSigma1(60*Fs+1:end);
-RootSigma2 = RootSigma2(60*Fs+1:end);
-RootSigma3 = RootSigma3(60*Fs+1:end);
+    % Append first minute of simulation
+    RootSigma1 = RootSigma1(60*Fs+1:end);
+    RootSigma2 = RootSigma2(60*Fs+1:end);
+    RootSigma3 = RootSigma3(60*Fs+1:end);
 
-% Fourier Transform
-FourierSigma1 = fft(RootSigma1);
-FourierSigma2 = fft(RootSigma2);
-FourierSigma3 = fft(RootSigma3);
+    % Fourier Transform
+    FourierSigma1 = fft(RootSigma1);
+    FourierSigma2 = fft(RootSigma2);
+    FourierSigma3 = fft(RootSigma3);
 
-% Take amplitude only and normalize by N. Take one-sided fourier
+    % Take amplitude only and normalize by N. Take one-sided fourier
 
-Sigma1 = abs(FourierSigma1/N);
-Sigma2 = abs(FourierSigma2/N);
-Sigma3 = abs(FourierSigma3/N);
-Sigma1 = Sigma1(1:N/2+1);
-Sigma2 = Sigma2(1:N/2+1);
-Sigma3 = Sigma3(1:N/2+1);
+    Sigma1 = abs(FourierSigma1/N);
+    Sigma2 = abs(FourierSigma2/N);
+    Sigma3 = abs(FourierSigma3/N);
+    Sigma1 = Sigma1(1:N/2+1);
+    Sigma2 = Sigma2(1:N/2+1);
+    Sigma3 = Sigma3(1:N/2+1);
 
-% Multiply by 2 except DC and Nyquist
+    % Multiply by 2 except DC and Nyquist
 
-Sigma1(2:end-1) = 2*Sigma1(2:end-1);
-Sigma2(2:end-1) = 2*Sigma2(2:end-1);
-Sigma3(2:end-1) = 2*Sigma3(2:end-1);
+    Sigma1(2:end-1) = 2*Sigma1(2:end-1);
+    Sigma2(2:end-1) = 2*Sigma2(2:end-1);
+    Sigma3(2:end-1) = 2*Sigma3(2:end-1);
 
-% Plot Root Stress spectra
+    % Plot Root Stress spectra
 
-figure;
-hold on
-plot(f, Sigma1,"DisplayName","Blade 1")
-plot(f, Sigma2,"DisplayName","Blade 2")
-plot(f, Sigma3,"DisplayName","Blade 3")
-title('Spectrum of Blade Root Stress')
-xlabel('Frequency (Hz)')
-ylabel('Amplitude of Blade Root Stress (Pa)')
-xlim([0 2])
-legend
+    figure;
+    hold on
+    plot(f, Sigma1,"DisplayName","Blade 1")
+    plot(f, Sigma2,"DisplayName","Blade 2")
+    plot(f, Sigma3,"DisplayName","Blade 3")
+    title('Spectrum of Blade Root Stress')
+    xlabel('Frequency (Hz)')
+    ylabel('Amplitude of Blade Root Stress (Pa)')
+    xlim([0 2])
+    legend
 
-% Tip Deflection spectra. Again, remove the average value due to weight
-% which is a static characterisitc. We are only interested in dynamic
-% effects.
+    % Tip Deflection spectra. Again, remove the average value due to weight
+    % which is a static characterisitc. We are only interested in dynamic
+    % effects.
 
-Deflection1 = response_data.OoPDefl1 - mean(response_data.OoPDefl1);
-Deflection2 = response_data.OoPDefl2 - mean(response_data.OoPDefl2);
-Deflection3 = response_data.OoPDefl3 - mean(response_data.OoPDefl3);
+    Deflection1 = response_data.OoPDefl1 - mean(response_data.OoPDefl1);
+    Deflection2 = response_data.OoPDefl2 - mean(response_data.OoPDefl2);
+    Deflection3 = response_data.OoPDefl3 - mean(response_data.OoPDefl3);
 
-% Append first minute of simulation
-Deflection1 = Deflection1(60*Fs+1:end);
-Deflection2 = Deflection2(60*Fs+1:end);
-Deflection3 = Deflection3(60*Fs+1:end);
+    % Append first minute of simulation
+    Deflection1 = Deflection1(60*Fs+1:end);
+    Deflection2 = Deflection2(60*Fs+1:end);
+    Deflection3 = Deflection3(60*Fs+1:end);
 
-% Fourier Transform
-FourierDef1 = fft(Deflection1);
-FourierDef2 = fft(Deflection2);
-FourierDef3 = fft(Deflection3);
+    % Fourier Transform
+    FourierDef1 = fft(Deflection1);
+    FourierDef2 = fft(Deflection2);
+    FourierDef3 = fft(Deflection3);
 
-% Take amplitude only and normalize by N. Take one-sided fourier
+    % Take amplitude only and normalize by N. Take one-sided fourier
 
-Defl1 = abs(FourierDef1/N);
-Delf2 = abs(FourierDef2/N);
-Defl3 = abs(FourierDef3/N);
-Defl1 = Defl1(1:N/2+1);
-Delf2 = Delf2(1:N/2+1);
-Defl3 = Defl3(1:N/2+1);
+    Defl1 = abs(FourierDef1/N);
+    Delf2 = abs(FourierDef2/N);
+    Defl3 = abs(FourierDef3/N);
+    Defl1 = Defl1(1:N/2+1);
+    Delf2 = Delf2(1:N/2+1);
+    Defl3 = Defl3(1:N/2+1);
 
-% Multiply by 2 except DC and Nyquist
+    % Multiply by 2 except DC and Nyquist
 
-Defl1(2:end-1) = 2*Defl1(2:end-1);
-Delf2(2:end-1) = 2*Delf2(2:end-1);
-Defl3(2:end-1) = 2*Defl3(2:end-1);
+    Defl1(2:end-1) = 2*Defl1(2:end-1);
+    Delf2(2:end-1) = 2*Delf2(2:end-1);
+    Defl3(2:end-1) = 2*Defl3(2:end-1);
 
-% Plot Root Stress spectra
+    % Plot Root Stress spectra
 
-figure;
-hold on
-plot(f, Defl1,"DisplayName","Blade 1")
-plot(f, Delf2,"DisplayName","Blade 2")
-plot(f, Defl3,"DisplayName","Blade 3")
-title('Spectrum of Out-of-Plane Deflection')
-xlabel('Frequency (Hz)')
-ylabel('Amplitude of Deflection (m)')
-xlim([0 2])
-legend
+    figure;
+    hold on
+    plot(f, Defl1,"DisplayName","Blade 1")
+    plot(f, Delf2,"DisplayName","Blade 2")
+    plot(f, Defl3,"DisplayName","Blade 3")
+    title('Spectrum of Out-of-Plane Deflection')
+    xlabel('Frequency (Hz)')
+    ylabel('Amplitude of Deflection (m)')
+    xlim([0 2])
+    legend
+end
+
+
+
+
